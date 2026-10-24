@@ -1,4 +1,4 @@
-package com.example.mysocial.ui.theme
+package com.mysocial.ui.theme
 
 import android.app.Activity
 import android.os.Build

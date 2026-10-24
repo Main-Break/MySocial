@@ -1,4 +1,4 @@
-package com.example.mysocial.ui.theme
+package com.mysocial.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

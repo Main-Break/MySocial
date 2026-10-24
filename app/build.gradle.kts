@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mysocial"
+    namespace = "com.mysocial"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.mysocial"
+        applicationId = "com.mysocial"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.mysocial
+package com.mysocial
 
 import org.junit.Test
 
