@@ -8,14 +8,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,20 +29,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
+import com.mysocial.ui.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(
     modifier: Modifier = Modifier,
-    onNavigateToLogin: () -> Unit = { }
+    onNavigateToLogin: () -> Unit = { },
+    authViewModel: AuthViewModel = viewModel()
 ) {
-    // Pode ser qualquer identificador tanto e-mail como usuário.
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    // Quando o cadastro dá certo, manda o usuário pra tela de Login pra ele entrar com a
+    // conta recém-criada (o cadastro, por si só, ainda não loga automaticamente).
+    LaunchedEffect(authViewModel.done) {
+        if (authViewModel.done) {
+            authViewModel.consumeResult()
+            onNavigateToLogin()
+        }
+    }
 
     Scaffold(modifier = modifier) { innerPadding ->
         Column(
@@ -65,7 +84,7 @@ fun RegisterScreen(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { if (it.length <= 254) email = it },
                 label = {
                     Text(
                         "E-mail"
@@ -80,7 +99,7 @@ fun RegisterScreen(
 
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { if (it.length <= 30) username = it },
                 label = {
                     Text(
                         "@username"
@@ -96,27 +115,46 @@ fun RegisterScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { if (it.length <= 128) password = it },
                 label = {
                     Text("Senha")
                 },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible)
+                    VisualTransformation.None
+                else PasswordVisualTransformation(),
+                // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
+                trailingIcon = {
+                    val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = icon, contentDescription = description)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Mensagem de erro do AuthViewModel (ex: "usuário/e-mail já em uso").
+            authViewModel.message?.let {
+                Spacer(modifier = Modifier.height(Dimens.spaceSmall))
+                Text(it, color = MaterialTheme.colorScheme.error)
+            }
 
             // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
             Button(
-                onClick = { },
-                // Verifica se o campo de identifiação e senha foram digitados assim liberando o botão.
-                enabled = email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty(),
+                onClick = {
+                    // Dispara o cadastro de verdade (validação + hash de senha + banco).
+                    authViewModel.register(username, email, password)
+                    password = ""
+                },
+                enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty(),
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Registrar-se")
+                Text(if (authViewModel.loading) "Aguarde..." else "Registrar-se")
             }
 
             // Espaçamento entre as seções.
@@ -126,7 +164,7 @@ fun RegisterScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Possui conta?")
 
-                TextButton(onClick = onNavigateToLogin) {
+                TextButton(onClick = onNavigateToLogin, enabled = !authViewModel.loading) {
                     Text("Ir para Login")
                 }
             }
