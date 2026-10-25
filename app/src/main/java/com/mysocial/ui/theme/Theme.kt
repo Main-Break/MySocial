@@ -17,20 +17,18 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Pink80
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+// App é dark-only (estilo "Lights out" do X), por isso só existe um ColorScheme,
+// sem variação clara/escura e sem dynamicColor (que substituiria a paleta fixa
+// pelas cores do papel de parede do usuário no Android 12+).
+private val MySocialColorScheme = darkColorScheme(
+    primary = PrimaryColor,
+    background = DarkBackground,
+    surface = DarkSurface,
+    onBackground = DarkOnBackground,
+    onSurface = DarkOnBackground,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkBorder,
+    error = ErrorColor
 )
 
 @Composable
