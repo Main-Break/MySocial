@@ -1,5 +1,11 @@
 package com.mysocial.ui.screen
 
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.mysocial.ui.theme.MySocialTheme
+
 // Tela onde será exibido os posts do programa
 
 @Composable
