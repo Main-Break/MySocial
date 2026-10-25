@@ -49,7 +49,7 @@ fun MySocialTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = MySocialColorScheme,
         typography = Typography,
         content = content
     )
