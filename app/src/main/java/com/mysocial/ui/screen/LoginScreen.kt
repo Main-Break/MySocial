@@ -19,6 +19,6 @@ fun LoginScreen(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun LoginScreenPreview() {
     MySocialTheme {
-        HomeScreen("Android")
+        LoginScreen("Android")
     }
 }
