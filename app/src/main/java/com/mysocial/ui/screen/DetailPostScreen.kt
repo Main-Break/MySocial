@@ -9,12 +9,8 @@ import com.mysocial.ui.theme.MySocialTheme
 // Ao clicar em um Post o mesmo será aberto nessa tela,
 // mostrando ele, e os comentários do mesmo abaixo.
 
-class DetailPostScreen {
-}
-
-
 @Composable
-fun FollowsScreen(name: String, modifier: Modifier = Modifier) {
+fun DetailPostScreen(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
         modifier = modifier
@@ -24,8 +20,8 @@ fun FollowsScreen(name: String, modifier: Modifier = Modifier) {
 // Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
-fun FollowsScreenPreview() {
+fun DetailPostScreenPreview() {
     MySocialTheme {
-        FollowsScreen("Android")
+        DetailPostScreen("Android")
     }
 }
