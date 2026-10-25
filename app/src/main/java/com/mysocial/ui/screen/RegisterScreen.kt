@@ -45,14 +45,14 @@ fun RegisterScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    var senha by remember { mutableStateOf("") }
-    var senhaVisivel by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Quando o cadastro dá certo, manda o usuário pra tela de Login pra ele entrar com a
     // conta recém-criada (o cadastro, por si só, ainda não loga automaticamente).
-    LaunchedEffect(authViewModel.concluido) {
-        if (authViewModel.concluido) {
-            authViewModel.consumirResultado()
+    LaunchedEffect(authViewModel.done) {
+        if (authViewModel.done) {
+            authViewModel.consumeResult()
             onNavigateToLogin()
         }
     }
@@ -114,27 +114,28 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
             OutlinedTextField(
-                value = senha,
-                onValueChange = { if (it.length <= 128) senha = it },
+                value = password,
+                onValueChange = { if (it.length <= 128) password = it },
                 label = {
                     Text("Senha")
                 },
                 singleLine = true,
-                visualTransformation = if (senhaVisivel)
+                visualTransformation = if (passwordVisible)
                     VisualTransformation.None
                 else PasswordVisualTransformation(),
+                // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
                 trailingIcon = {
-                    val icone = if (senhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    val descricao = if (senhaVisivel) "Esconder senha" else "Mostrar senha"
-                    IconButton(onClick = { senhaVisivel = !senhaVisivel }) {
-                        Icon(imageVector = icone, contentDescription = descricao)
+                    val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = icon, contentDescription = description)
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
 
             // Mensagem de erro do AuthViewModel (ex: "usuário/e-mail já em uso").
-            authViewModel.mensagem?.let {
+            authViewModel.message?.let {
                 Spacer(modifier = Modifier.height(Dimens.spaceSmall))
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
@@ -145,15 +146,15 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     // Dispara o cadastro de verdade (validação + hash de senha + banco).
-                    authViewModel.cadastrar(username, email, senha)
-                    senha = ""
+                    authViewModel.register(username, email, password)
+                    password = ""
                 },
-                enabled = !authViewModel.carregando && email.isNotEmpty() && senha.isNotEmpty() && username.isNotEmpty(),
+                enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty(),
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (authViewModel.carregando) "Aguarde..." else "Registrar-se")
+                Text(if (authViewModel.loading) "Aguarde..." else "Registrar-se")
             }
 
             // Espaçamento entre as seções.
@@ -163,7 +164,7 @@ fun RegisterScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Possui conta?")
 
-                TextButton(onClick = onNavigateToLogin, enabled = !authViewModel.carregando) {
+                TextButton(onClick = onNavigateToLogin, enabled = !authViewModel.loading) {
                     Text("Ir para Login")
                 }
             }

@@ -11,16 +11,16 @@ import javax.crypto.spec.PBEKeySpec
 object AuthManager {
     // Quanto maior esse número, mais lento (e mais seguro contra força bruta) fica gerar
     // o hash. 60 mil é um valor comum/recomendado pra esse algoritmo.
-    private const val ITERACOES = 60_000
+    private const val ITERATIONS = 60_000
 
     // Gera um valor aleatório novo (salt) pra cada usuário. Isso impede que duas pessoas
     // com a mesma senha acabem com o mesmo hash salvo no banco.
-    fun criarSalt(): ByteArray = ByteArray(16).also { SecureRandom().nextBytes(it) }
+    fun createSalt(): ByteArray = ByteArray(16).also { SecureRandom().nextBytes(it) }
 
     // Transforma a senha (texto) + salt num hash de 256 bits usando PBKDF2, um algoritmo
     // feito pra isso (ao contrário de algo tipo MD5/SHA simples, que não servem pra senha).
-    fun gerarHash(senha: String, salt: ByteArray): ByteArray {
-        val spec = PBEKeySpec(senha.toCharArray(), salt, ITERACOES, 256)
+    fun generateHash(password: String, salt: ByteArray): ByteArray {
+        val spec = PBEKeySpec(password.toCharArray(), salt, ITERATIONS, 256)
         return try {
             SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1").generateSecret(spec).encoded
         } finally {
@@ -32,12 +32,12 @@ object AuthManager {
     // Confere se a senha digitada no login gera o mesmo hash que está salvo no banco.
     // Usa MessageDigest.isEqual (em vez de comparar byte a byte na mão) porque essa função
     // evita vazar, pelo tempo de execução, quantos bytes já bateram, dificultando ataques.
-    fun validarSenha(senha: String, salt: ByteArray, senhaDB: ByteArray): Boolean {
-        val calculo = gerarHash(senha, salt)
+    fun validatePassword(password: String, salt: ByteArray, storedHash: ByteArray): Boolean {
+        val computed = generateHash(password, salt)
         return try {
-            MessageDigest.isEqual(senhaDB, calculo)
+            MessageDigest.isEqual(storedHash, computed)
         } finally {
-            calculo.fill(0)
+            computed.fill(0)
         }
     }
 }

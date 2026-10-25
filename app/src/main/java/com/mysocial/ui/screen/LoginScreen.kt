@@ -45,15 +45,15 @@ fun LoginScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
-    var senha by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     // Controla se a senha aparece em texto ou escondida (bolinhas), junto com o ícone de olho.
-    var senhaVisivel by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
 
-    // Fica "escutando" o resultado do login. Quando o AuthViewModel marca concluido = true
+    // Fica "escutando" o resultado do login. Quando o AuthViewModel marca done = true
     // (login deu certo), navega pro feed e avisa o ViewModel que já reagiu a isso.
-    LaunchedEffect(authViewModel.concluido) {
-        if (authViewModel.concluido) {
-            authViewModel.consumirResultado()
+    LaunchedEffect(authViewModel.done) {
+        if (authViewModel.done) {
+            authViewModel.consumeResult()
             onLoginSuccess()
         }
     }
@@ -97,21 +97,21 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
             OutlinedTextField(
-                value = senha,
-                onValueChange = { if (it.length <= 128) senha = it },
+                value = password,
+                onValueChange = { if (it.length <= 128) password = it },
                 label = {
                     Text("Senha")
                 },
                 singleLine = true,
-                visualTransformation = if (senhaVisivel)
+                visualTransformation = if (passwordVisible)
                     VisualTransformation.None
                 else PasswordVisualTransformation(),
                 // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
                 trailingIcon = {
-                    val icone = if (senhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    val descricao = if (senhaVisivel) "Esconder senha" else "Mostrar senha"
-                    IconButton(onClick = { senhaVisivel = !senhaVisivel }) {
-                        Icon(imageVector = icone, contentDescription = descricao)
+                    val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = icon, contentDescription = description)
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -119,7 +119,7 @@ fun LoginScreen(
 
             // Mensagem de erro do AuthViewModel (ex: "e-mail ou senha inválido"), só aparece
             // quando existe um erro.
-            authViewModel.mensagem?.let {
+            authViewModel.message?.let {
                 Spacer(modifier = Modifier.height(Dimens.spaceSmall))
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
@@ -130,16 +130,16 @@ fun LoginScreen(
             Button(
                 onClick = {
                     // Dispara o login de verdade (acesso ao banco) no AuthViewModel.
-                    authViewModel.login(email, senha)
+                    authViewModel.login(email, password)
                     // Limpa o campo de senha da tela por segurança, já foi enviado.
-                    senha = ""
+                    password = ""
                 },
-                enabled = !authViewModel.carregando && email.isNotEmpty() && senha.isNotEmpty(),
+                enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty(),
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (authViewModel.carregando) "Aguarde..." else "Entrar")
+                Text(if (authViewModel.loading) "Aguarde..." else "Entrar")
             }
 
             // Espaçamento entre as seções.
@@ -149,7 +149,7 @@ fun LoginScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Não tem conta?")
 
-                TextButton(onClick = onNavigateToRegister, enabled = !authViewModel.carregando) {
+                TextButton(onClick = onNavigateToRegister, enabled = !authViewModel.loading) {
                     Text("Cadastre-se")
                 }
             }

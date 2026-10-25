@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.mysocial.auth.SessaoUsuario
+import com.mysocial.auth.UserSession
 import com.mysocial.data.Post
 import com.mysocial.data.dal.PostDAO
 import com.mysocial.validation.PostValidator
@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // Ponte entre as telas de feed/novo post e o banco de dados, no mesmo padrão do
-// AuthViewModel: a tela só chama listar()/criar() e lê os estados (posts, carregando,
-// mensagem, publicado) pra saber o que mostrar.
+// AuthViewModel: a tela só chama list()/create() e lê os estados (posts, loading,
+// message, published) pra saber o que mostrar.
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = PostDAO(application)
 
@@ -25,57 +25,57 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     var posts by mutableStateOf<List<Post>>(emptyList())
         private set
 
-    var mensagem by mutableStateOf<String?>(null)
+    var message by mutableStateOf<String?>(null)
         private set
 
-    var carregando by mutableStateOf(false)
+    var loading by mutableStateOf(false)
         private set
 
     // Vira true assim que um post novo é publicado com sucesso. A tela de novo post
-    // observa isso pra voltar pro feed, e depois chama consumirPublicado() pra resetar.
-    var publicado by mutableStateOf(false)
+    // observa isso pra voltar pro feed, e depois chama consumePublished() pra resetar.
+    var published by mutableStateOf(false)
         private set
 
-    // Mesma ideia do "executar" do AuthViewModel: evita clique duplo e transforma erro
+    // Mesma ideia do "run" do AuthViewModel: evita clique duplo e transforma erro
     // numa mensagem amigável.
-    private fun executar(operacao: suspend () -> Unit) {
-        if (carregando) return
-        carregando = true
-        mensagem = null
+    private fun run(operation: suspend () -> Unit) {
+        if (loading) return
+        loading = true
+        message = null
 
         viewModelScope.launch {
             try {
-                operacao()
-            } catch (erro: CancellationException) {
-                throw erro
-            } catch (erro: IllegalArgumentException) {
+                operation()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: IllegalArgumentException) {
                 // Erro vindo do PostValidator/require (ex: post vazio ou grande demais).
-                mensagem = erro.message
-            } catch (erro: Exception) {
-                mensagem = "Ocorreu um erro inesperado!"
+                message = error.message
+            } catch (error: Exception) {
+                message = "Ocorreu um erro inesperado!"
             } finally {
-                carregando = false
+                loading = false
             }
         }
     }
 
     // Busca todos os posts no banco (mais recente primeiro) pra exibir no feed.
-    fun listar() = executar {
-        val lista = withContext(Dispatchers.IO) { dao.listar() }
-        posts = lista
+    fun list() = run {
+        val result = withContext(Dispatchers.IO) { dao.list() }
+        posts = result
     }
 
-    // Cria um post novo pro usuário logado. Exige estar logado (SessaoUsuario.exigirUsuario)
+    // Cria um post novo pro usuário logado. Exige estar logado (UserSession.requireUser)
     // e valida o tamanho do texto antes de gravar no banco.
-    fun criar(conteudo: String) = executar {
-        val usuarioId = SessaoUsuario.exigirUsuario()
-        val conteudoLimpo = conteudo.trim()
-        PostValidator.validar(conteudoLimpo)
-        withContext(Dispatchers.IO) { dao.criar(usuarioId, conteudoLimpo) }
-        publicado = true
+    fun create(content: String) = run {
+        val userId = UserSession.requireUser()
+        val trimmedContent = content.trim()
+        PostValidator.validate(trimmedContent)
+        withContext(Dispatchers.IO) { dao.create(userId, trimmedContent) }
+        published = true
     }
 
-    fun consumirPublicado() {
-        publicado = false
+    fun consumePublished() {
+        published = false
     }
 }

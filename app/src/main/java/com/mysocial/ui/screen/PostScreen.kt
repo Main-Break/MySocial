@@ -37,12 +37,12 @@ fun PostScreen(
     voltar: () -> Unit = { },
     postViewModel: PostViewModel = viewModel()
 ) {
-    var conteudo by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
 
     // Quando o post é publicado com sucesso, volta pro feed sozinho.
-    LaunchedEffect(postViewModel.publicado) {
-        if (postViewModel.publicado) {
-            postViewModel.consumirPublicado()
+    LaunchedEffect(postViewModel.published) {
+        if (postViewModel.published) {
+            postViewModel.consumePublished()
             voltar()
         }
     }
@@ -64,10 +64,10 @@ fun PostScreen(
             Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
             OutlinedTextField(
-                value = conteudo,
+                value = content,
                 // Já trava a digitação em 280 caracteres aqui na tela (mesmo limite do
                 // PostValidator), pra nem deixar passar do limite ao digitar.
-                onValueChange = { if (it.length <= PostValidator.TAMANHO_MAXIMO) conteudo = it },
+                onValueChange = { if (it.length <= PostValidator.MAX_LENGTH) content = it },
                 label = { Text("O que está acontecendo?") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -81,13 +81,13 @@ fun PostScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    "${conteudo.length}/${PostValidator.TAMANHO_MAXIMO}",
+                    "${content.length}/${PostValidator.MAX_LENGTH}",
                     style = MaterialTheme.typography.labelSmall
                 )
             }
 
             // Mensagem de erro do PostViewModel (ex: post vazio).
-            postViewModel.mensagem?.let {
+            postViewModel.message?.let {
                 Spacer(modifier = Modifier.height(Dimens.spaceSmall))
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
@@ -97,13 +97,13 @@ fun PostScreen(
 
             Button(
                 // Dispara a criação do post de verdade (valida + grava no banco).
-                onClick = { postViewModel.criar(conteudo) },
-                enabled = !postViewModel.carregando && conteudo.isNotBlank(),
+                onClick = { postViewModel.create(content) },
+                enabled = !postViewModel.loading && content.isNotBlank(),
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (postViewModel.carregando) "Publicando..." else "Postar")
+                Text(if (postViewModel.loading) "Publicando..." else "Postar")
             }
         }
     }

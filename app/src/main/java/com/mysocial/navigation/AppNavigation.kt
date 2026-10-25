@@ -9,7 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.mysocial.auth.SessaoUsuario
+import com.mysocial.auth.UserSession
 import com.mysocial.ui.screen.FeedScreen
 import com.mysocial.ui.screen.LoginScreen
 import com.mysocial.ui.screen.PostScreen
@@ -18,17 +18,17 @@ import com.mysocial.ui.screen.RegisterScreen
 @Composable
 fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifier) {
     // Observa pra qual tela o app está navegando agora, e se tem alguém logado.
-    val entradaAtual by navController.currentBackStackEntryAsState()
-    val destino = entradaAtual?.destination
-    val usuarioAtual = SessaoUsuario.usuarioId
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val destination = currentEntry?.destination
+    val currentUser = UserSession.userId
 
     // Roda de novo toda vez que o destino ou o usuário logado mudam. Se a rota não for
     // Login/Cadastro (ou seja, é uma rota "protegida", tipo Feed) e ninguém estiver logado,
     // manda forçado de volta pro Login. Isso evita, por exemplo, alguém cair direto no feed
     // sem ter passado pelo login.
-    LaunchedEffect(destino, usuarioAtual) {
-        val publica = destino?.hasRoute<LoginUser>() == true || destino?.hasRoute<RegisterUser>() == true
-        if (destino != null && !publica && usuarioAtual == null) {
+    LaunchedEffect(destination, currentUser) {
+        val isPublic = destination?.hasRoute<LoginUser>() == true || destination?.hasRoute<RegisterUser>() == true
+        if (destination != null && !isPublic && currentUser == null) {
             navController.navigate(LoginUser) {
                 // Limpa todo o histórico de navegação, pra não dar pra voltar com o botão
                 // "voltar" do celular pra uma tela que exige login.

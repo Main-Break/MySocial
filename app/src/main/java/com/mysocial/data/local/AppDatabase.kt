@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import java.io.File
 
 // Classe que cria e abre o banco SQLite do app. É aberta/fechada toda vez que um DAO
-// (UsuarioDAO, PostDAO) precisa ler ou gravar algo, por isso ela fica bem enxuta.
+// (UserDAO, PostDAO) precisa ler ou gravar algo, por isso ela fica bem enxuta.
 internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     context.applicationContext,
     // noBackupFilesDir evita que o Android inclua o banco em backup automático na nuvem,
@@ -19,26 +19,26 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     // Aqui fica o schema completo e atual do banco (sempre consolidado, nunca espalhado
     // em vários arquivos de migração separados).
     override fun onCreate(db: SQLiteDatabase) {
-        // Tabela de usuários cadastrados. A senha nunca é salva em texto puro: "senha" guarda
-        // o hash (gerado pelo AuthManager) e "salt" o valor aleatório usado nesse hash.
+        // Tabela de usuários cadastrados. A senha nunca é salva em texto puro: "password"
+        // guarda o hash (gerado pelo AuthManager) e "salt" o valor aleatório usado nesse hash.
         db.execSQL("""
-            CREATE TABLE usuarios(
+            CREATE TABLE users(
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE CHECK(length(username) BETWEEN 3 AND 30),
             email TEXT NOT NULL UNIQUE CHECK(length(email) BETWEEN 3 AND 254),
-            senha BLOB NOT NULL,
+            password BLOB NOT NULL,
             salt BLOB NOT NULL
             )
         """.trimIndent())
 
-        // Tabela de posts. "usuario_id" é o autor do post (referencia a tabela usuarios).
+        // Tabela de posts. "user_id" é o autor do post (referencia a tabela users).
         // O CHECK de tamanho do conteúdo é o mesmo limite de 280 caracteres do Twitter/X.
         db.execSQL("""
             CREATE TABLE posts(
             id INTEGER PRIMARY KEY,
-            usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
-            conteudo TEXT NOT NULL CHECK(length(conteudo) BETWEEN 1 AND 280),
-            data_criacao TEXT NOT NULL
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            content TEXT NOT NULL CHECK(length(content) BETWEEN 1 AND 280),
+            created_at TEXT NOT NULL
             )
         """.trimIndent())
     }

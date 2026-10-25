@@ -5,11 +5,11 @@ package com.mysocial.validation
 object PostValidator {
     // Fica público porque a tela de novo post (PostScreen) também usa esse número pra
     // travar a digitação e mostrar o contador "123/280".
-    const val TAMANHO_MAXIMO = 280
+    const val MAX_LENGTH = 280
 
-    fun validar(conteudo: String) {
-        require(conteudo.isNotBlank() && conteudo.length <= TAMANHO_MAXIMO) {
-            "O post deve ter entre 1 e $TAMANHO_MAXIMO caracteres"
+    fun validate(content: String) {
+        require(content.isNotBlank() && content.length <= MAX_LENGTH) {
+            "O post deve ter entre 1 e $MAX_LENGTH caracteres"
         }
     }
 }
