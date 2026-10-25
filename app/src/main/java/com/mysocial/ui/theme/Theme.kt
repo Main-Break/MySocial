@@ -1,23 +1,12 @@
 package com.mysocial.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-// App é dark-only, por isso só existe um ColorScheme,
+// App é dark-only (estilo "Lights out" do X), por isso só existe um ColorScheme,
+// sem variação clara/escura e sem dynamicColor (que substituiria a paleta fixa
+// pelas cores do papel de parede do usuário no Android 12+).
 private val MySocialColorScheme = darkColorScheme(
     primary = PrimaryColor,
     background = DarkBackground,
@@ -31,23 +20,10 @@ private val MySocialColorScheme = darkColorScheme(
 
 @Composable
 fun MySocialTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = MySocialColorScheme,
         typography = Typography,
         content = content
     )
