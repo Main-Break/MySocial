@@ -85,7 +85,7 @@ fun LoginScreen(
                     Text("Senha")
                 },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(mask = '*'),
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
 
