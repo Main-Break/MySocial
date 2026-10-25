@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.Color
 
 // Cor primaria para botões, links, icones etc...
 val PrimaryColor = Color(0xFF1D9BF0)
+// Cor do texto/ícone que fica POR CIMA da PrimaryColor
+val OnPrimaryColor = Color(0xFFFFFFFF)
 
 // Tema escuro
 val DarkBackground = Color(0xFF000000)
