@@ -1,7 +1,31 @@
 package com.mysocial.ui.screen
 
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.mysocial.ui.theme.MySocialTheme
+
 // Ao clicar em um Post o mesmo será aberto nessa tela,
 // mostrando ele, e os comentários do mesmo abaixo.
 
 class DetailPostScreen {
+}
+
+
+@Composable
+fun FollowsScreen(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
+    )
+}
+
+// Para vizualizar a tela
+@Preview(showBackground = true)
+@Composable
+fun FollowsScreenPreview() {
+    MySocialTheme {
+        FollowsScreen("Android")
+    }
 }
