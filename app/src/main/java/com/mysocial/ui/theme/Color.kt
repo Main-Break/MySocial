@@ -1,11 +1,22 @@
 package com.mysocial.ui.theme
 
+/*
+    Nesse arquivo ficam as paletas de cores do projeto;
+*/
+
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Cor primaria para botões, links, icones etc...
+val PrimaryColor = Color(0xFF1D9BF0)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Tema escuro
+val DarkBackground = Color(0xFF000000)
+val DarkSurface = Color(0xFF000000)
+val DarkOnBackground = Color(0xFFE7E9EA)
+val DarkOnSurfaceVariant = Color(0xFF71767B)
+val DarkBorder = Color(0xFF2F3336)
+
+// Ações específicas de post (curtir, repost, erro)
+val LikeColor = Color(0xFF00BCD4)
+val RepostColor = Color(0xFF00BA7C)
+val ErrorColor = Color(0xFFF4212E)

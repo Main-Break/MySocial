@@ -54,3 +54,6 @@ key.properties
 .env.*
 google-services.json
 GoogleService-Info.plist
+
+# Notas e planejamentos locais, não fazem parte do código versionado.
+/notas/
