@@ -3,25 +3,26 @@ package com.mysocial.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-object Login
+object LoginUser
 
 @Serializable
-object Cadastro
+object RegisterUser
 
 @Serializable
 object Feed
 
 @Serializable
-object CriarPost
+object RegisterPost
 
 @Serializable
-data class DetalhePost(val postId: Long)
+data class DetailPost(val postId: Long)
 
 @Serializable
-data class Perfil(val userId: Long)
+data class Profile(val userId: Long)
 
 @Serializable
-data class ListaRelacionamentos(val userId: Long, val tipo: TipoLista)
+data class Follows(val userId: Long, val type: TypeListFollows)
 
 @Serializable
-enum class TipoLista { SEGUIDORES, SEGUINDO }
+enum class TypeListFollows { FOLLOW, FOLLOWERS }
+// Seguindo / Seguidores
