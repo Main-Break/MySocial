@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,116 +56,113 @@ fun RegisterScreen(
         }
     }
 
-    Scaffold(modifier = modifier) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = Dimens.spaceLarge),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "MySocial",
-                style = MaterialTheme.typography.titleLarge
-            )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = Dimens.spaceLarge),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "MySocial",
+            style = MaterialTheme.typography.titleLarge
+        )
 
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceLarge))
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
-            Text(
-                text = "Registre-se",
-                style = MaterialTheme.typography.titleMedium
-            )
+        Text(
+            text = "Registre-se",
+            style = MaterialTheme.typography.titleMedium
+        )
 
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceLarge))
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { if (it.length <= 254) email = it },
-                label = {
-                    Text(
-                        "E-mail"
-                    )
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = email,
+            onValueChange = { if (it.length <= 254) email = it },
+            label = {
+                Text(
+                    "E-mail"
+                )
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceSmall))
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
-            OutlinedTextField(
-                value = username,
-                onValueChange = { if (it.length <= 30) username = it },
-                label = {
-                    Text(
-                        "@username"
-                    )
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = username,
+            onValueChange = { if (it.length <= 30) username = it },
+            label = {
+                Text(
+                    "@username"
+                )
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
 
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceSmall))
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { if (it.length <= 128) password = it },
-                label = {
-                    Text("Senha")
-                },
-                singleLine = true,
-                visualTransformation = if (passwordVisible)
-                    VisualTransformation.None
-                else PasswordVisualTransformation(),
-                // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
-                trailingIcon = {
-                    val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = icon, contentDescription = description)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Mensagem de erro do AuthViewModel (ex: "usuário/e-mail já em uso").
-            authViewModel.message?.let {
-                Spacer(modifier = Modifier.height(Dimens.spaceSmall))
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceMedium))
-
-            Button(
-                onClick = {
-                    // Dispara o cadastro de verdade (validação + hash de senha + banco).
-                    authViewModel.register(username, email, password)
-                    password = ""
-                },
-                enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty(),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (authViewModel.loading) "Aguarde..." else "Registrar-se")
-            }
-
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceLarge))
-
-            // Seção onde o usuário não cadastrado pode criar a conta.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Possui conta?")
-
-                TextButton(onClick = onNavigateToLogin, enabled = !authViewModel.loading) {
-                    Text("Ir para Login")
+        OutlinedTextField(
+            value = password,
+            onValueChange = { if (it.length <= 128) password = it },
+            label = {
+                Text("Senha")
+            },
+            singleLine = true,
+            visualTransformation = if (passwordVisible)
+                VisualTransformation.None
+            else PasswordVisualTransformation(),
+            // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
+            trailingIcon = {
+                val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = icon, contentDescription = description)
                 }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Mensagem de erro do AuthViewModel (ex: "usuário/e-mail já em uso").
+        authViewModel.message?.let {
+            Spacer(modifier = Modifier.height(Dimens.spaceSmall))
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
+
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceMedium))
+
+        Button(
+            onClick = {
+                // Dispara o cadastro de verdade (validação + hash de senha + banco).
+                authViewModel.register(username, email, password)
+                password = ""
+            },
+            enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty(),
+            shape = MaterialTheme.shapes.large,
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (authViewModel.loading) "Aguarde..." else "Registrar-se")
+        }
+
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceLarge))
+
+        // Seção onde o usuário não cadastrado pode criar a conta.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Possui conta?")
+
+            TextButton(onClick = onNavigateToLogin, enabled = !authViewModel.loading) {
+                Text("Ir para Login")
             }
         }
     }
