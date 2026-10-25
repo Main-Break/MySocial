@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,18 +28,20 @@ import com.mysocial.R
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.Username
 
+// Card de um post no feed, igual ao Twitter/X: sem elevação/cor de superfície diferente do
+// fundo (nada de "Card" do Material, que clareia um pouco o preto por causa do tonal
+// elevation), cada post é uma faixa preta de ponta a ponta com uma linha fina embaixo
+// separando do próximo post.
 @Composable
 fun CardPost(
     username: String,
     name: String,
     contentPost: String,
     datePost: String,
-    qtdComments: Int,
-    qtdLikes: Int
+    amountComments: Int,
+    amountLikes: Int
 ) {
-    Card(modifier = Modifier.fillMaxWidth()
-        .padding(Dimens.spaceSmall)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,14 +83,10 @@ fun CardPost(
                     )
 
                     Spacer(Modifier.height(Dimens.spaceSmall))
-                    // Placeholder: foto padrão do Android até o post ter imagem real anexada
-
-                    Spacer(Modifier.height(Dimens.spaceSmall))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.ChatBubbleOutline,
@@ -97,9 +95,8 @@ fun CardPost(
                                 modifier = Modifier.size(Dimens.iconSize)
                             )
                             Spacer(Modifier.width(Dimens.spaceExtraSmall))
-                            Text(qtdRespostas, style = MaterialTheme.typography.labelSmall, color = Username)
+                            Text(amountComments.toString(), style = MaterialTheme.typography.labelSmall, color = Username)
                         }
-
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -109,13 +106,14 @@ fun CardPost(
                                 modifier = Modifier.size(Dimens.iconSize)
                             )
                             Spacer(Modifier.width(Dimens.spaceExtraSmall))
-                            Text(qtdCurtidas, style = MaterialTheme.typography.labelSmall, color = Username)
+                            Text(amountLikes.toString(), style = MaterialTheme.typography.labelSmall, color = Username)
                         }
-
-
                     }
                 }
             }
         }
+
+        // Linha fina separando esse post do próximo, em vez de um Card com borda/sombra.
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
     }
 }
