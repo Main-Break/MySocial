@@ -6,13 +6,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mysocial.ui.theme.MySocialTheme
 
-class RegisterScreen {
-}
-
 @Composable
-fun RegisterScreen(name: String, modifier: Modifier = Modifier) {
+fun RegisterScreen(modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = "Cadastro",
         modifier = modifier
     )
 }
@@ -22,6 +19,6 @@ fun RegisterScreen(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun RegisterScreenPreview() {
     MySocialTheme {
-        RegisterScreen("Android")
+        RegisterScreen()
     }
 }

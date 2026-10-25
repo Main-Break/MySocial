@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -23,17 +22,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToRegister: () -> Unit = { }
+) {
+
+    // Pode ser qualquer identificador tanto e-mail como usuário.
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -48,65 +49,68 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = "MySocial",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge
             )
 
+            // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
             Text(
                 text = "Entre na sua conta",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium
             )
 
+            // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
             OutlinedTextField(
                 value = identifier,
                 onValueChange = { identifier = it },
-                label = { Text("Telefone, e-mail ou usuário") },
+                label = {
+                    Text(
+                        "Telefone, e-mail ou usuário"
+                    )
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Senha") },
+                label = {
+                    Text("Senha")
+                },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = PasswordVisualTransformation(mask = '*'),
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
             Button(
                 onClick = { },
+                // Verifica se o campo de identifiação e senha foram digitados assim liberando o botão.
                 enabled = identifier.isNotEmpty() && password.isNotEmpty(),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryColor,
-                    contentColor = Color.White
-                ),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Entrar")
             }
 
-            Spacer(modifier = Modifier.height(Dimens.spaceSmall))
-
-            TextButton(onClick = { }) {
-                Text("Esqueceu a senha?")
-            }
-
+            // Espaçamento entre as seções.
             Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
+            // Seção onde o usuário não cadastrado pode criar a conta.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Não tem conta?")
-                TextButton(onClick = { }) {
+
+                TextButton(onClick = onNavigateToRegister) {
                     Text("Cadastre-se")
                 }
             }
