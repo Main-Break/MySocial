@@ -2,7 +2,6 @@ package com.mysocial.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +11,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,64 +45,56 @@ fun PostScreen(
         }
     }
 
-    Scaffold(modifier = modifier) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = Dimens.spaceLarge),
-            verticalArrangement = Arrangement.Center
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = Dimens.spaceLarge),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Novo post",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceLarge))
+
+        OutlinedTextField(
+            value = content,
+            // Já trava a digitação em 280 caracteres aqui na tela (mesmo limite do
+            // PostValidator), pra nem deixar passar do limite ao digitar.
+            onValueChange = { if (it.length <= PostValidator.MAX_LENGTH) content = it },
+            label = { Text("O que está acontecendo?") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceExtraSmall))
+
+        // Contador "123/280".
+        Text(
+            "${content.length}/${PostValidator.MAX_LENGTH}",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        // Mensagem de erro do PostViewModel (ex: post vazio).
+        postViewModel.message?.let {
+            Spacer(modifier = Modifier.height(Dimens.spaceSmall))
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
+
+        // Espaçamento entre as seções.
+        Spacer(modifier = Modifier.height(Dimens.spaceMedium))
+
+        Button(
+            // Dispara a criação do post de verdade (valida + grava no banco).
+            onClick = { postViewModel.create(content) },
+            enabled = !postViewModel.loading && content.isNotBlank(),
+            shape = MaterialTheme.shapes.large,
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "Novo post",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceLarge))
-
-            OutlinedTextField(
-                value = content,
-                // Já trava a digitação em 280 caracteres aqui na tela (mesmo limite do
-                // PostValidator), pra nem deixar passar do limite ao digitar.
-                onValueChange = { if (it.length <= PostValidator.MAX_LENGTH) content = it },
-                label = { Text("O que está acontecendo?") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceExtraSmall))
-
-            // Contador "123/280" alinhado à direita, igual ao Twitter/X.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Text(
-                    "${content.length}/${PostValidator.MAX_LENGTH}",
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-
-            // Mensagem de erro do PostViewModel (ex: post vazio).
-            postViewModel.message?.let {
-                Spacer(modifier = Modifier.height(Dimens.spaceSmall))
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-
-            // Espaçamento entre as seções.
-            Spacer(modifier = Modifier.height(Dimens.spaceMedium))
-
-            Button(
-                // Dispara a criação do post de verdade (valida + grava no banco).
-                onClick = { postViewModel.create(content) },
-                enabled = !postViewModel.loading && content.isNotBlank(),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (postViewModel.loading) "Publicando..." else "Postar")
-            }
+            Text(if (postViewModel.loading) "Publicando..." else "Postar")
         }
     }
 }

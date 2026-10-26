@@ -22,3 +22,6 @@ val DarkBorder = Color(0xFF2F3336)
 val LikeColor = Color(0xFF00BCD4)
 val RepostColor = Color(0xFF00BA7C)
 val ErrorColor = Color(0xFFF4212E)
+
+// Profile e Card Post
+val Username = Color(0xFF8A8A8A)

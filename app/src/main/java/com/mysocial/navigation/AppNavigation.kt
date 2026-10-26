@@ -13,6 +13,7 @@ import com.mysocial.auth.UserSession
 import com.mysocial.ui.screen.FeedScreen
 import com.mysocial.ui.screen.LoginScreen
 import com.mysocial.ui.screen.PostScreen
+import com.mysocial.ui.screen.ProfileScreen
 import com.mysocial.ui.screen.RegisterScreen
 
 @Composable
@@ -63,14 +64,9 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
             )
         }
 
-        // Tela principal com os posts. O parâmetro "name" é só um placeholder temporário:
-        // a tela de Feed em si (com os cards de post de verdade) está sendo feita numa
-        // branch separada (feat/FeedScreen) e ainda não foi unida com esse trabalho de
-        // login/banco de dados.
+        // Tela principal com os posts, lendo direto do banco de dados.
         composable<Feed> {
-            FeedScreen(
-                name = "Android"
-            )
+            FeedScreen()
         }
 
         // Tela de criar um post novo (com limite de 280 caracteres).
@@ -78,6 +74,12 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
             PostScreen(
                 voltar = { navController.popBackStack() }
             )
+        }
+
+        // Tela de perfil do usuário. Ainda é só um placeholder (sem dados reais), a tela
+        // de perfil em si não foi pedida ainda.
+        composable<Profile> {
+            ProfileScreen(name = "Android")
         }
     }
 }
