@@ -18,6 +18,7 @@ import com.mysocial.navigation.Feed
 import com.mysocial.navigation.LoginUser
 import com.mysocial.navigation.Profile
 import com.mysocial.navigation.RegisterPost
+import com.mysocial.ui.theme.PrimaryColor
 
 // Barra de navegação do topo do app, visível em todas as telas depois do login.
 // Mesma ideia do Menu.kt do material do professor: um TopAppBar só, com botões de ação
@@ -27,7 +28,7 @@ import com.mysocial.navigation.RegisterPost
 fun TopNavBar(navController: NavHostController) {
     TopAppBar(
         title = {
-            Text("MySocial")
+            Text("MySocial", style = MaterialTheme.typography.titleMedium)
         },
         actions = {
             // Botão de "+" (cor primária, igual ao botão de compor do Twitter): abre a
@@ -36,7 +37,7 @@ fun TopNavBar(navController: NavHostController) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Novo post",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = PrimaryColor
                 )
             }
 

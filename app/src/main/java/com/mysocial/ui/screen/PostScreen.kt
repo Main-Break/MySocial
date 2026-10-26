@@ -2,7 +2,6 @@ package com.mysocial.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,16 +71,11 @@ fun PostScreen(
         // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceExtraSmall))
 
-        // Contador "123/280" alinhado à direita, igual ao Twitter/X.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Text(
-                "${content.length}/${PostValidator.MAX_LENGTH}",
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
+        // Contador "123/280".
+        Text(
+            "${content.length}/${PostValidator.MAX_LENGTH}",
+            style = MaterialTheme.typography.titleMedium
+        )
 
         // Mensagem de erro do PostViewModel (ex: post vazio).
         postViewModel.message?.let {
