@@ -32,7 +32,7 @@ internal class PostDAO(context: Context) {
     fun list(): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
             FROM posts
             JOIN users ON users.id = posts.user_id
             ORDER BY posts.created_at DESC, posts.id DESC
@@ -46,8 +46,9 @@ internal class PostDAO(context: Context) {
                             id = cursor.getLong(0),
                             userId = cursor.getLong(1),
                             author = cursor.getString(2),
-                            content = cursor.getString(3),
-                            createdAt = cursor.getString(4)
+                            authorCoverColor = cursor.getString(3),
+                            content = cursor.getString(4),
+                            createdAt = cursor.getString(5)
                         )
                     )
                 }
@@ -60,7 +61,7 @@ internal class PostDAO(context: Context) {
     fun listByUser(userId: Long): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.user_id = ?
@@ -75,8 +76,9 @@ internal class PostDAO(context: Context) {
                             id = cursor.getLong(0),
                             userId = cursor.getLong(1),
                             author = cursor.getString(2),
-                            content = cursor.getString(3),
-                            createdAt = cursor.getString(4)
+                            authorCoverColor = cursor.getString(3),
+                            content = cursor.getString(4),
+                            createdAt = cursor.getString(5)
                         )
                     )
                 }
@@ -90,7 +92,7 @@ internal class PostDAO(context: Context) {
     fun findById(id: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.id = ?
@@ -101,8 +103,9 @@ internal class PostDAO(context: Context) {
                 id = cursor.getLong(0),
                 userId = cursor.getLong(1),
                 author = cursor.getString(2),
-                content = cursor.getString(3),
-                createdAt = cursor.getString(4)
+                authorCoverColor = cursor.getString(3),
+                content = cursor.getString(4),
+                createdAt = cursor.getString(5)
             ) else null
         }
     }
@@ -112,7 +115,7 @@ internal class PostDAO(context: Context) {
     fun findById(id: Long, currentUserId: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.id = ? AND posts.user_id = ?
@@ -123,8 +126,9 @@ internal class PostDAO(context: Context) {
                 id = cursor.getLong(0),
                 userId = cursor.getLong(1),
                 author = cursor.getString(2),
-                content = cursor.getString(3),
-                createdAt = cursor.getString(4)
+                authorCoverColor = cursor.getString(3),
+                content = cursor.getString(4),
+                createdAt = cursor.getString(5)
             ) else null
         }
     }

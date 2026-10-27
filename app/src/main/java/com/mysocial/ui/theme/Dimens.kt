@@ -14,6 +14,10 @@ object Dimens {
     val avatarSize = 40.dp
     val iconSize = 18.dp
 
+    // Capa e avatar grande do cabeçalho do perfil (estilo X).
+    val coverHeight = 120.dp
+    val avatarSizeLarge = 84.dp
+
     val postHorizontalPadding = 16.dp
     val postVerticalPadding = 12.dp
 }

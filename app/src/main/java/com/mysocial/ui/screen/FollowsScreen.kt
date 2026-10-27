@@ -11,21 +11,29 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.navigation.TypeListFollows
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
+import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.theme.Username
 import com.mysocial.ui.viewmodel.FollowsViewModel
 
-// Tela onde será listado os seguidores (FOLLOWERS) ou quem o usuário está seguindo
-// (FOLLOW), dependendo do TypeListFollows recebido pela rota. Clicar num usuário da
-// lista leva pro perfil dele.
+// Tela de Seguidores/Seguindo de um usuário. Igual ao X: um menu no topo com duas
+// abas (Seguidores / Seguindo), e trocar de aba só troca a lista mostrada, sem
+// precisar voltar e navegar de novo. "type" define qual aba abre primeiro (a que
+// a pessoa clicou lá no perfil).
 @Composable
 fun FollowsScreen(
     userId: Long,
@@ -34,47 +42,62 @@ fun FollowsScreen(
     onNavigateToProfile: (Long) -> Unit = {},
     followsViewModel: FollowsViewModel = viewModel()
 ) {
-    // Recarrega sempre que o userId ou o tipo (seguidores/seguindo) mudar.
-    LaunchedEffect(userId, type) {
-        followsViewModel.load(userId, type)
+    var abaSelecionada by remember(userId) { mutableStateOf(type) }
+
+    // Recarrega sempre que o userId ou a aba selecionada (seguidores/seguindo) mudar.
+    LaunchedEffect(userId, abaSelecionada) {
+        followsViewModel.load(userId, abaSelecionada)
     }
 
-    val titulo = if (type == TypeListFollows.FOLLOWERS) "Seguidores" else "Seguindo"
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize().padding(Dimens.spaceLarge),
-        verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
-    ) {
-        item {
-            Text(titulo, style = MaterialTheme.typography.titleLarge)
+    Column(modifier = modifier.fillMaxSize()) {
+        // Menu do topo com as duas opções, igual ao X.
+        PrimaryTabRow(
+            selectedTabIndex = if (abaSelecionada == TypeListFollows.FOLLOWERS) 0 else 1,
+            contentColor = PrimaryColor
+        ) {
+            Tab(
+                selected = abaSelecionada == TypeListFollows.FOLLOWERS,
+                onClick = { abaSelecionada = TypeListFollows.FOLLOWERS },
+                text = { Text("Seguidores") }
+            )
+            Tab(
+                selected = abaSelecionada == TypeListFollows.FOLLOW,
+                onClick = { abaSelecionada = TypeListFollows.FOLLOW },
+                text = { Text("Seguindo") }
+            )
         }
 
-        if (followsViewModel.loading) {
-            item { CircularProgressIndicator() }
-        }
-
-        if (!followsViewModel.loading && followsViewModel.users.isEmpty()) {
-            item {
-                Text(
-                    if (type == TypeListFollows.FOLLOWERS) "Ninguém segue esse usuário ainda"
-                    else "Esse usuário ainda não segue ninguém",
-                    style = MaterialTheme.typography.titleMedium
-                )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(Dimens.spaceLarge),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
+        ) {
+            if (followsViewModel.loading) {
+                item { CircularProgressIndicator() }
             }
-        }
 
-        items(followsViewModel.users, key = { it.id }) { user ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToProfile(user.id) }
-            ) {
-                Column(
-                    modifier = Modifier.padding(Dimens.spaceMedium),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
+            if (!followsViewModel.loading && followsViewModel.users.isEmpty()) {
+                item {
+                    Text(
+                        if (abaSelecionada == TypeListFollows.FOLLOWERS) "Ninguém segue esse usuário ainda"
+                        else "Esse usuário ainda não segue ninguém",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+
+            items(followsViewModel.users, key = { it.id }) { user ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToProfile(user.id) }
                 ) {
-                    Text(user.username, style = MaterialTheme.typography.titleMedium)
-                    Text("@${user.username}", color = Username)
+                    Column(
+                        modifier = Modifier.padding(Dimens.spaceMedium),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
+                    ) {
+                        Text(user.username, style = MaterialTheme.typography.titleMedium)
+                        Text("@${user.username}", color = Username)
+                    }
                 }
             }
         }

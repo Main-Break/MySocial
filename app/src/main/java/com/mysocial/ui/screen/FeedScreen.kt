@@ -20,9 +20,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.auth.UserSession
+import com.mysocial.data.PostStats
 import com.mysocial.ui.component.CardPost
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
@@ -85,15 +87,19 @@ fun FeedScreen(
             val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
             val date = LocalDateTime.parse(post.createdAt)
 
-            // amountComments/amountLikes ainda ficam fixos em 0: o banco ainda não tem
-            // tabela de curtidas/comentários, só de posts.
+            val stats = postViewModel.stats[post.id] ?: PostStats()
+
             CardPost(
                 username = post.author,
                 name = post.author,
                 contentPost = post.content,
                 datePost = date.format(formatter),
-                amountComments = 0,
-                amountLikes = 0,
+                amountComments = stats.comments,
+                amountLikes = stats.likes,
+                avatarColor = Color(android.graphics.Color.parseColor(post.authorCoverColor)),
+                isLiked = stats.likedByMe,
+                onLikeClick = { postViewModel.toggleLike(post.id) },
+                onCommentClick = { onNavigateToDetail(post.id) },
                 isOwner = post.userId == UserSession.userId,
                 onEditClick = { onNavigateToEditPost(post.id) },
                 onDeleteClick = { deleteId = post.id },
