@@ -15,6 +15,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.mysocial.ui.theme.DarkBackground
 import com.mysocial.ui.theme.Dimens
+import com.mysocial.ui.theme.ErrorColor
 import com.mysocial.ui.theme.OnPrimaryColor
 import com.mysocial.ui.theme.Username
 
@@ -34,7 +36,12 @@ fun CardPost(
     contentPost: String,
     datePost: String,
     amountComments: Int,
-    amountLikes: Int
+    amountLikes: Int,
+    // true só quando o post é do usuário logado, pra mostrar os botões de Editar/Excluir
+    // (mesma regra de dono que já existe no PostDAO).
+    isOwner: Boolean = false,
+    onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -106,6 +113,18 @@ fun CardPost(
                     )
                     // Quantidade de Likes no post
                     Text(amountLikes.toString(), style = MaterialTheme.typography.titleMedium, color = Username)
+                }
+            }
+
+            // Botões de Editar/Excluir, só aparecem pra quem é dono do post.
+            if (isOwner) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)) {
+                    TextButton(onClick = onEditClick) {
+                        Text("Editar")
+                    }
+                    TextButton(onClick = onDeleteClick) {
+                        Text("Excluir", color = ErrorColor)
+                    }
                 }
             }
         }

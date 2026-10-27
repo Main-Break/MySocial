@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.toRoute
 import com.mysocial.auth.UserSession
 import com.mysocial.ui.screen.FeedScreen
 import com.mysocial.ui.screen.LoginScreen
@@ -66,12 +67,23 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
 
         // Tela principal com os posts, lendo direto do banco de dados.
         composable<Feed> {
-            FeedScreen()
+            FeedScreen(
+                onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) }
+            )
         }
 
         // Tela de criar um post novo (com limite de 280 caracteres).
         composable<RegisterPost> {
             PostScreen(
+                voltar = { navController.popBackStack() }
+            )
+        }
+
+        // Tela de editar um post existente (reaproveita a mesma PostScreen do post novo).
+        composable<EditPost> { backStackEntry ->
+            val rota = backStackEntry.toRoute<EditPost>()
+            PostScreen(
+                postId = rota.postId,
                 voltar = { navController.popBackStack() }
             )
         }

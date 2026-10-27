@@ -55,6 +55,70 @@ internal class PostDAO(context: Context) {
         }
     }
 
+    // Lista só os posts de um usuário (usado na tela de Perfil), mesmo JOIN e ordenação
+    // do list() acima, só que filtrado por "user_id".
+    fun listByUser(userId: Long): List<Post> = AppDatabase(appContext).use { db ->
+        db.readableDatabase.rawQuery(
+            """
+            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            WHERE posts.user_id = ?
+            ORDER BY posts.created_at DESC, posts.id DESC
+            """.trimIndent(),
+            arrayOf(userId.toString())
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(
+                        Post(
+                            id = cursor.getLong(0),
+                            userId = cursor.getLong(1),
+                            author = cursor.getString(2),
+                            content = cursor.getString(3),
+                            createdAt = cursor.getString(4)
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    // Busca um post específico, mas só se pertencer ao usuário informado (mesma ideia de
+    // segurança do update/delete abaixo). Usado pra carregar os dados na tela de edição.
+    fun findById(id: Long, currentUserId: Long): Post? = AppDatabase(appContext).use { db ->
+        db.readableDatabase.rawQuery(
+            """
+            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            WHERE posts.id = ? AND posts.user_id = ?
+            """.trimIndent(),
+            arrayOf(id.toString(), currentUserId.toString())
+        ).use { cursor ->
+            if (cursor.moveToFirst()) Post(
+                id = cursor.getLong(0),
+                userId = cursor.getLong(1),
+                author = cursor.getString(2),
+                content = cursor.getString(3),
+                createdAt = cursor.getString(4)
+            ) else null
+        }
+    }
+
+    // Altera o conteúdo de um post. O "user_id = ?" na cláusula garante que só o dono
+    // do post consegue editá-lo, mesmo que o id do post seja adivinhado/forjado.
+    fun update(id: Long, currentUserId: Long, content: String) {
+        AppDatabase(appContext).use { db ->
+            val values = ContentValues().apply { put("content", content) }
+            val updated = db.writableDatabase.update(
+                "posts", values, "id = ? AND user_id = ?",
+                arrayOf(id.toString(), currentUserId.toString())
+            )
+            require(updated == 1) { "Post não encontrado, atualize a lista" }
+        }
+    }
+
     // Exclui um post. O "user_id = ?" na cláusula garante que só o dono do post
     // consegue excluí-lo, mesmo que o id do post seja adivinhado/forjado.
     fun delete(id: Long, currentUserId: Long) {

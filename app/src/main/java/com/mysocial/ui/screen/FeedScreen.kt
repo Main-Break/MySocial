@@ -8,14 +8,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mysocial.auth.UserSession
 import com.mysocial.ui.component.CardPost
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
@@ -31,12 +38,18 @@ import java.util.Locale
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
+    onNavigateToEditPost: (Long) -> Unit = {},
     postViewModel: PostViewModel = viewModel()
 ) {
     // Busca os posts assim que a tela abre.
     LaunchedEffect(Unit) {
         postViewModel.list()
     }
+
+    // Guarda o id do post que o usuário pediu pra excluir, só pra mostrar o AlertDialog
+    // de confirmação (mesmo padrão do UsuarioScreen do professor). Null = nenhum post
+    // aguardando confirmação.
+    var deleteId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
         if (postViewModel.loading) {
@@ -79,9 +92,33 @@ fun FeedScreen(
                 contentPost = post.content,
                 datePost = date.format(formatter),
                 amountComments = 0,
-                amountLikes = 0
+                amountLikes = 0,
+                isOwner = post.userId == UserSession.userId,
+                onEditClick = { onNavigateToEditPost(post.id) },
+                onDeleteClick = { deleteId = post.id }
             )
         }
+    }
+
+    // Confirmação de exclusão: só aparece quando "deleteId" está preenchido.
+    val postParaExcluir = postViewModel.posts.firstOrNull { it.id == deleteId }
+    if (postParaExcluir != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text("Excluir post?") },
+            text = { Text("Essa ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleteId = null
+                        postViewModel.delete(postParaExcluir.id)
+                    }
+                ) { Text("Excluir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteId = null }) { Text("Cancelar") }
+            }
+        )
     }
 }
 

@@ -27,17 +27,28 @@ import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.viewmodel.PostViewModel
 import com.mysocial.validation.PostValidator
 
-// Tela onde será feito um novo post, podendo o mesmo ser escrito.
+// Tela onde será feito um novo post (postId nulo) ou editado um post existente
+// (postId informado), podendo o mesmo ser escrito.
 
 @Composable
 fun PostScreen(
     modifier: Modifier = Modifier,
+    postId: Long? = null,
     voltar: () -> Unit = { },
     postViewModel: PostViewModel = viewModel()
 ) {
     var content by remember { mutableStateOf("") }
 
-    // Quando o post é publicado com sucesso, volta pro feed sozinho.
+    // Modo edição: assim que a tela abre, busca o post no banco (só funciona se for do
+    // usuário logado) e preenche o campo de texto com o conteúdo atual dele.
+    LaunchedEffect(postId) {
+        if (postId != null) postViewModel.loadForEdit(postId)
+    }
+    LaunchedEffect(postViewModel.editTarget) {
+        postViewModel.editTarget?.let { content = it.content }
+    }
+
+    // Quando o post é publicado (ou a edição é salva) com sucesso, volta pro feed sozinho.
     LaunchedEffect(postViewModel.published) {
         if (postViewModel.published) {
             postViewModel.consumePublished()
@@ -52,7 +63,7 @@ fun PostScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Novo post",
+            text = if (postId == null) "Novo post" else "Editar post",
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -87,14 +98,24 @@ fun PostScreen(
         Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
         Button(
-            // Dispara a criação do post de verdade (valida + grava no banco).
-            onClick = { postViewModel.create(content) },
+            // Dispara a criação (ou a edição, se postId foi informado) de verdade,
+            // validando o conteúdo e gravando no banco.
+            onClick = {
+                if (postId == null) postViewModel.create(content)
+                else postViewModel.update(postId, content)
+            },
             enabled = !postViewModel.loading && content.isNotBlank(),
             shape = MaterialTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (postViewModel.loading) "Publicando..." else "Postar")
+            val textoBotao = when {
+                postViewModel.loading && postId == null -> "Publicando..."
+                postViewModel.loading -> "Salvando..."
+                postId == null -> "Postar"
+                else -> "Salvar"
+            }
+            Text(textoBotao)
         }
     }
 }

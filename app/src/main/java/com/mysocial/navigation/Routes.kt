@@ -15,6 +15,9 @@ object Feed
 object RegisterPost
 
 @Serializable
+data class EditPost(val postId: Long)
+
+@Serializable
 data class DetailPost(val postId: Long)
 
 @Serializable

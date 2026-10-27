@@ -31,9 +31,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     var loading by mutableStateOf(false)
         private set
 
-    // Vira true assim que um post novo é publicado com sucesso. A tela de novo post
-    // observa isso pra voltar pro feed, e depois chama consumePublished() pra resetar.
+    // Vira true assim que um post novo é publicado (ou uma edição é salva) com sucesso.
+    // A tela de novo post/edição observa isso pra voltar pro feed, e depois chama
+    // consumePublished() pra resetar.
     var published by mutableStateOf(false)
+        private set
+
+    // Post carregado pra edição (ver loadForEdit). Fica null enquanto não carrega ou se
+    // o post não existir/não for do usuário logado.
+    var editTarget by mutableStateOf<Post?>(null)
         private set
 
     // Mesma ideia do "run" do AuthViewModel: evita clique duplo e transforma erro
@@ -77,5 +83,31 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun consumePublished() {
         published = false
+    }
+
+    // Busca um post do usuário logado pra preencher a tela de edição.
+    fun loadForEdit(id: Long) = run {
+        val userId = UserSession.requireUser()
+        val post = withContext(Dispatchers.IO) { dao.findById(id, userId) }
+        requireNotNull(post) { "Post não encontrado" }
+        editTarget = post
+    }
+
+    // Salva a edição de um post já existente (só funciona se o post for do usuário logado,
+    // conferido lá no PostDAO.update).
+    fun update(id: Long, content: String) = run {
+        val userId = UserSession.requireUser()
+        val trimmedContent = content.trim()
+        PostValidator.validate(trimmedContent)
+        withContext(Dispatchers.IO) { dao.update(id, userId, trimmedContent) }
+        published = true
+    }
+
+    // Exclui um post do usuário logado e já tira ele da lista em tela, sem precisar
+    // recarregar tudo de novo do banco.
+    fun delete(id: Long) = run {
+        val userId = UserSession.requireUser()
+        withContext(Dispatchers.IO) { dao.delete(id, userId) }
+        posts = posts.filterNot { it.id == id }
     }
 }
