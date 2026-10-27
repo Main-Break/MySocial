@@ -68,6 +68,7 @@ fun ProfileScreen(
     onNavigateToFollows: (TypeListFollows) -> Unit = {},
     onNavigateToEditPost: (Long) -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {},
     profileViewModel: ProfileViewModel = viewModel()
 ) {
     // Busca os dados do perfil assim que a tela abre, ou sempre que o userId mudar
@@ -139,6 +140,16 @@ fun ProfileScreen(
                     Text(user.username, style = MaterialTheme.typography.titleLarge)
                     Text("@${user.username}", color = Username, style = MaterialTheme.typography.titleMedium)
 
+                    // Bio, só aparece se o usuário já preencheu uma.
+                    if (user.bio.isNotBlank()) {
+                        Text(user.bio, style = MaterialTheme.typography.bodyLarge)
+                    }
+
+                    // Cidade/estado, só aparece se o endereço já foi preenchido.
+                    if (user.cidade.isNotBlank() || user.estado.isNotBlank()) {
+                        Text("📍 ${listOf(user.cidade, user.estado).filter { it.isNotBlank() }.joinToString(" - ")}", color = Username)
+                    }
+
                     // Contadores clicáveis: abrem a lista de seguidores/seguindo.
                     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceLarge)) {
                         Row(modifier = Modifier.clickable { onNavigateToFollows(TypeListFollows.FOLLOWERS) }) {
@@ -151,9 +162,11 @@ fun ProfileScreen(
                         }
                     }
 
-                    // Botão de seguir/deixar de seguir só aparece no perfil de outra pessoa,
-                    // nunca no próprio perfil.
-                    if (UserSession.userId != null && UserSession.userId != userId) {
+                    // No próprio perfil mostra "Editar perfil"; no de outra pessoa,
+                    // mostra o botão de seguir/deixar de seguir.
+                    if (UserSession.userId == userId) {
+                        OutlinedButton(onClick = onNavigateToEditProfile) { Text("Editar perfil") }
+                    } else if (UserSession.userId != null) {
                         if (profileViewModel.isFollowing) {
                             OutlinedButton(
                                 onClick = { profileViewModel.unfollow(userId) },

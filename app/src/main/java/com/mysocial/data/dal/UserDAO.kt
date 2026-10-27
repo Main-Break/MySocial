@@ -52,17 +52,35 @@ internal class UserDAO(context: Context) {
         }
     }
 
+    // Colunas usadas pra montar um User completo (ver userFromCursor logo abaixo).
+    private val userColumns = arrayOf(
+        "id", "username", "email", "cover_color",
+        "bio", "cep", "rua", "numero", "bairro", "cidade", "estado"
+    )
+
+    private fun userFromCursor(cursor: android.database.Cursor) = User(
+        id = cursor.getLong(0),
+        username = cursor.getString(1),
+        email = cursor.getString(2),
+        coverColor = cursor.getString(3),
+        bio = cursor.getString(4),
+        cep = cursor.getString(5),
+        rua = cursor.getString(6),
+        numero = cursor.getString(7),
+        bairro = cursor.getString(8),
+        cidade = cursor.getString(9),
+        estado = cursor.getString(10)
+    )
+
     // Lista todos os usuários cadastrados, ordenado por nome de usuário.
     fun list(): List<User> = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
-            "users", arrayOf("id", "username", "email", "cover_color"),
+            "users", userColumns,
             null, null, null, null,
             "username COLLATE NOCASE, id"
         ).use { cursor ->
             buildList {
-                while (cursor.moveToNext()) {
-                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
-                }
+                while (cursor.moveToNext()) add(userFromCursor(cursor))
             }
         }
     }
@@ -70,17 +88,11 @@ internal class UserDAO(context: Context) {
     // Busca um usuário específico pelo id.
     fun findById(id: Long): User? = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
-            "users", arrayOf("id", "username", "email", "cover_color"),
+            "users", userColumns,
             "id = ?", arrayOf(id.toString()),
             null, null, null
         ).use { cursor ->
-            if (cursor.moveToFirst()) User(
-                cursor.getLong(0),
-                cursor.getString(1),
-                cursor.getString(2),
-                cursor.getString(3)
-            )
-            else null
+            if (cursor.moveToFirst()) userFromCursor(cursor) else null
         }
     }
 
@@ -91,6 +103,36 @@ internal class UserDAO(context: Context) {
                 put("username", username)
                 if (password != null) put("password", password)
                 if (salt != null) put("salt", salt)
+            }
+            val updated = db.writableDatabase.update(
+                "users", values, "id = ?", arrayOf(id.toString())
+            )
+            require(updated == 1) { "Usuário não encontrado, atualize a lista" }
+        }
+    }
+
+    // Atualiza a bio e o endereço do perfil (dados "extras", separados do username/senha
+    // acima). Só o próprio usuário logado edita o próprio perfil, conferido pelo
+    // ProfileViewModel antes de chamar isso.
+    fun updateProfile(
+        id: Long,
+        bio: String,
+        cep: String,
+        rua: String,
+        numero: String,
+        bairro: String,
+        cidade: String,
+        estado: String
+    ) {
+        AppDatabase(appContext).use { db ->
+            val values = ContentValues().apply {
+                put("bio", bio)
+                put("cep", cep)
+                put("rua", rua)
+                put("numero", numero)
+                put("bairro", bairro)
+                put("cidade", cidade)
+                put("estado", estado)
             }
             val updated = db.writableDatabase.update(
                 "users", values, "id = ?", arrayOf(id.toString())

@@ -13,7 +13,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     // já que ele guarda senha (mesmo em hash) e dado de usuário.
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    3 // versão do schema, usada pelo onUpgrade logo abaixo
+    4 // versão do schema, usada pelo onUpgrade logo abaixo
 ) {
     // Roda só uma vez, na primeira vez que o app abre e o banco ainda não existe.
     // Aqui fica o schema completo e atual do banco (sempre consolidado, nunca espalhado
@@ -23,6 +23,8 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
         // guarda o hash (gerado pelo AuthManager) e "salt" o valor aleatório usado nesse hash.
         // "cover_color" é a cor de fundo da capa do perfil (estilo X), escolhida uma vez
         // no cadastro a partir de uma paleta fixa e guardada em hexadecimal (ex: "#1D9BF0").
+        // "bio" e o endereço (cep/rua/numero/bairro/cidade/estado) começam vazios no
+        // cadastro e são preenchidos depois, na tela de editar perfil.
         db.execSQL("""
             CREATE TABLE users(
             id INTEGER PRIMARY KEY,
@@ -30,7 +32,14 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             email TEXT NOT NULL UNIQUE CHECK(length(email) BETWEEN 3 AND 254),
             password BLOB NOT NULL,
             salt BLOB NOT NULL,
-            cover_color TEXT NOT NULL DEFAULT '#1D9BF0'
+            cover_color TEXT NOT NULL DEFAULT '#1D9BF0',
+            bio TEXT NOT NULL DEFAULT '' CHECK(length(bio) <= 160),
+            cep TEXT NOT NULL DEFAULT '',
+            rua TEXT NOT NULL DEFAULT '',
+            numero TEXT NOT NULL DEFAULT '',
+            bairro TEXT NOT NULL DEFAULT '',
+            cidade TEXT NOT NULL DEFAULT '',
+            estado TEXT NOT NULL DEFAULT ''
             )
         """.trimIndent())
 
@@ -116,6 +125,18 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
                 created_at TEXT NOT NULL
                 )
             """.trimIndent())
+        }
+
+        // Quem já tinha o banco antes da versão 4 ganha a bio e o endereço, todos
+        // começando vazios, sem perder nenhum dado que já existia.
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN cep TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN rua TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN numero TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN bairro TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN cidade TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE users ADD COLUMN estado TEXT NOT NULL DEFAULT ''")
         }
     }
 }

@@ -2,33 +2,46 @@ package com.mysocial.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
+import com.mysocial.ui.theme.Username
 import com.mysocial.ui.viewmodel.PostViewModel
 import com.mysocial.validation.PostValidator
 
 // Tela onde será feito um novo post (postId nulo) ou editado um post existente
-// (postId informado), podendo o mesmo ser escrito.
+// (postId informado). O campo de texto é grande e sem caixa visível, igual ao
+// compositor de post do X: o "X" no canto superior esquerdo volta pra tela anterior
+// sem fazer nada com o que foi digitado (o rascunho só é perdido se a pessoa
+// publicar ou realmente sair da tela, não só por tocar sem querer).
 
 @Composable
 fun PostScreen(
@@ -59,63 +72,77 @@ fun PostScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = Dimens.spaceLarge),
-        verticalArrangement = Arrangement.Center
+            .padding(Dimens.spaceLarge)
     ) {
-        Text(
-            text = if (postId == null) "Novo post" else "Editar post",
-            style = MaterialTheme.typography.titleMedium
-        )
+        // Cabeçalho: "X" pra voltar sem publicar nada, e o botão de publicar/salvar
+        // do outro lado, igual ao topo do compositor do X.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = voltar) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Fechar")
+            }
+
+            Button(
+                // Dispara a criação (ou a edição, se postId foi informado) de verdade,
+                // validando o conteúdo e gravando no banco.
+                onClick = {
+                    if (postId == null) postViewModel.create(content)
+                    else postViewModel.update(postId, content)
+                },
+                enabled = !postViewModel.loading && content.isNotBlank(),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
+            ) {
+                val textoBotao = when {
+                    postViewModel.loading && postId == null -> "Publicando..."
+                    postViewModel.loading -> "Salvando..."
+                    postId == null -> "Postar"
+                    else -> "Salvar"
+                }
+                Text(textoBotao)
+            }
+        }
 
         // Espaçamento entre as seções.
-        Spacer(modifier = Modifier.height(Dimens.spaceLarge))
+        Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
-        OutlinedTextField(
+        // Campo de texto grande, sem caixa visível (fundo e indicador transparentes),
+        // ocupando o resto da tela, igual ao compositor do X.
+        TextField(
             value = content,
             // Já trava a digitação em 280 caracteres aqui na tela (mesmo limite do
             // PostValidator), pra nem deixar passar do limite ao digitar.
             onValueChange = { if (it.length <= PostValidator.MAX_LENGTH) content = it },
-            label = { Text("O que está acontecendo?") },
-            modifier = Modifier.fillMaxWidth()
+            placeholder = { Text("O que está acontecendo?") },
+            minLines = 6,
+            textStyle = MaterialTheme.typography.titleMedium,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
         )
 
-        // Espaçamento entre as seções.
-        Spacer(modifier = Modifier.height(Dimens.spaceExtraSmall))
-
-        // Contador "123/280".
+        // Contador "123/280", alinhado à direita, igual ao X.
         Text(
             "${content.length}/${PostValidator.MAX_LENGTH}",
-            style = MaterialTheme.typography.titleMedium
+            color = Username,
+            textAlign = TextAlign.End,
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodyMedium
         )
 
         // Mensagem de erro do PostViewModel (ex: post vazio).
         postViewModel.message?.let {
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
             Text(it, color = MaterialTheme.colorScheme.error)
-        }
-
-        // Espaçamento entre as seções.
-        Spacer(modifier = Modifier.height(Dimens.spaceMedium))
-
-        Button(
-            // Dispara a criação (ou a edição, se postId foi informado) de verdade,
-            // validando o conteúdo e gravando no banco.
-            onClick = {
-                if (postId == null) postViewModel.create(content)
-                else postViewModel.update(postId, content)
-            },
-            enabled = !postViewModel.loading && content.isNotBlank(),
-            shape = MaterialTheme.shapes.large,
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            val textoBotao = when {
-                postViewModel.loading && postId == null -> "Publicando..."
-                postViewModel.loading -> "Salvando..."
-                postId == null -> "Postar"
-                else -> "Salvar"
-            }
-            Text(textoBotao)
         }
     }
 }

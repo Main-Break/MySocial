@@ -29,9 +29,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -198,10 +199,17 @@ fun DetailPostScreen(
                         .padding(Dimens.spaceLarge),
                     verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
                 ) {
-                    OutlinedTextField(
+                    TextField(
                         value = novoComentario,
                         onValueChange = { if (it.length <= CommentValidator.MAX_LENGTH) novoComentario = it },
-                        label = { Text("Comente algo") },
+                        placeholder = { Text("Comente algo") },
+                        minLines = 3,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     commentViewModel.message?.let {

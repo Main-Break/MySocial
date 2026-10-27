@@ -24,6 +24,9 @@ data class DetailPost(val postId: Long)
 data class Profile(val userId: Long)
 
 @Serializable
+object EditProfile
+
+@Serializable
 data class Follows(val userId: Long, val type: TypeListFollows)
 
 @Serializable

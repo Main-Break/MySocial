@@ -64,6 +64,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var message by mutableStateOf<String?>(null)
         private set
 
+    // Vira true quando a edição do perfil é salva com sucesso. A tela de edição
+    // observa isso pra voltar pro perfil, e depois chama consumeSaved() pra resetar.
+    var saved by mutableStateOf(false)
+        private set
+
     // Mesma ideia do "run" do AuthViewModel/PostViewModel: evita clique duplo e
     // transforma erro numa mensagem amigável.
     private fun run(operation: suspend () -> Unit) {
@@ -146,6 +151,24 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         withContext(Dispatchers.IO) { followDao.unfollow(currentUserId, profileUserId) }
         isFollowing = false
         followersCount = (followersCount - 1).coerceAtLeast(0)
+    }
+
+    // Salva a edição da bio/endereço do próprio usuário logado e já atualiza o "user"
+    // em tela, sem precisar recarregar o perfil inteiro do banco.
+    fun updateProfile(bio: String, cep: String, rua: String, numero: String, bairro: String, cidade: String, estado: String) = run {
+        val currentUserId = UserSession.requireUser()
+        withContext(Dispatchers.IO) {
+            userDao.updateProfile(currentUserId, bio, cep, rua, numero, bairro, cidade, estado)
+        }
+        user = user?.copy(
+            bio = bio, cep = cep, rua = rua, numero = numero,
+            bairro = bairro, cidade = cidade, estado = estado
+        )
+        saved = true
+    }
+
+    fun consumeSaved() {
+        saved = false
     }
 
     // Exclui um post exibido no perfil (só funciona se for do usuário logado, conferido

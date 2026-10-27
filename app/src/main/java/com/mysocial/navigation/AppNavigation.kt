@@ -12,6 +12,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.mysocial.auth.UserSession
 import com.mysocial.ui.screen.DetailPostScreen
+import com.mysocial.ui.screen.EditProfileScreen
 import com.mysocial.ui.screen.FeedScreen
 import com.mysocial.ui.screen.FollowsScreen
 import com.mysocial.ui.screen.LoginScreen
@@ -99,7 +100,15 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
                 userId = rota.userId,
                 onNavigateToFollows = { type -> navController.navigate(Follows(rota.userId, type)) },
                 onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) },
-                onNavigateToDetail = { postId -> navController.navigate(DetailPost(postId)) }
+                onNavigateToDetail = { postId -> navController.navigate(DetailPost(postId)) },
+                onNavigateToEditProfile = { navController.navigate(EditProfile) }
+            )
+        }
+
+        // Tela de editar o próprio perfil (bio e endereço).
+        composable<EditProfile> {
+            EditProfileScreen(
+                voltar = { navController.popBackStack() }
             )
         }
 
