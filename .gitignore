@@ -57,3 +57,8 @@ GoogleService-Info.plist
 
 # Notas e planejamentos locais, não fazem parte do código versionado.
 /notas/
+
+# Dependências do gerador de documentação em .docx (docs/gerar-docx/), reinstala
+# com "npm install" ali dentro quando precisar regenerar os .docx.
+docs/gerar-docx/node_modules/
+docs/gerar-docx/package-lock.json
