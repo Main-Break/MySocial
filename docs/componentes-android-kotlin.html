@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>MySocial: Componentes de Android e Kotlin usados no projeto</title>
+<style>
+    @page { margin: 2cm; }
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #1a1a1a;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+        line-height: 1.5;
+    }
+    header {
+        border-bottom: 3px solid #1D9BF0;
+        padding-bottom: 12px;
+        margin-bottom: 24px;
+    }
+    header h1 { margin-bottom: 4px; }
+    header p { color: #555; margin: 2px 0; }
+    nav#sumario {
+        background: #f4f6f8;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px 24px;
+        margin-bottom: 28px;
+        column-count: 2;
+    }
+    nav#sumario h2 { margin-top: 0; font-size: 1.1em; column-span: all; }
+    nav#sumario ol { margin: 0; padding-left: 20px; }
+    nav#sumario li { margin-bottom: 4px; break-inside: avoid; }
+    nav#sumario a { color: #1D9BF0; text-decoration: none; }
+    nav#sumario a:hover { text-decoration: underline; }
+
+    .conteudo {
+        column-count: 2;
+        column-gap: 40px;
+        column-rule: 1px solid #ddd;
+    }
+    h2 {
+        column-span: all;
+        border-left: 5px solid #1D9BF0;
+        padding-left: 10px;
+        margin-top: 34px;
+        margin-bottom: 8px;
+        background: #f4f6f8;
+    }
+    .item { break-inside: avoid; margin-bottom: 20px; }
+    .item h3 {
+        margin-top: 0;
+        margin-bottom: 2px;
+        color: #0d6ab0;
+        font-family: "Consolas", monospace;
+    }
+    .item .subtitulo {
+        font-size: 0.78em;
+        color: #888;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    p { margin: 5px 0; font-size: 0.92em; }
+    code {
+        background: #f0f0f0;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.88em;
+    }
+    pre {
+        background: #1e1e1e;
+        color: #e0e0e0;
+        padding: 8px 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.74em;
+        break-inside: avoid;
+        margin: 6px 0;
+    }
+    .onde {
+        font-size: 0.82em;
+        color: #555;
+        background: #eef7ff;
+        border-left: 3px solid #1D9BF0;
+        padding: 4px 8px;
+        margin-top: 6px;
+    }
+    footer {
+        column-span: all;
+        margin-top: 40px;
+        border-top: 1px solid #ddd;
+        padding-top: 12px;
+        font-size: 0.8em;
+        color: #777;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>MySocial: Componentes de Android e Kotlin usados no projeto</h1>
+    <p>Guia de apoio para quem tem menos familiaridade com Android/Compose. Explica o que cada peça faz, por que ela foi usada aqui e como funciona por baixo dos panos, sempre com um trecho real do código do projeto.</p>
+</header>
+
+<nav id="sumario">
+    <h2>Sumário</h2>
+    <ol>
+        <li><a href="#composable">@Composable</a></li>
+        <li><a href="#remember">remember e mutableStateOf</a></li>
+        <li><a href="#by">O operador "by" (property delegation)</a></li>
+        <li><a href="#launchedeffect">LaunchedEffect</a></li>
+        <li><a href="#lazycolumn">LazyColumn e items</a></li>
+        <li><a href="#rememberSaveable">rememberSaveable</a></li>
+        <li><a href="#viewmodel">ViewModel e AndroidViewModel</a></li>
+        <li><a href="#viewmodelscope">viewModelScope e coroutines</a></li>
+        <li><a href="#dispatchers">Dispatchers.IO e withContext</a></li>
+        <li><a href="#navhost">NavHost, NavController e rotas @Serializable</a></li>
+        <li><a href="#scaffold">Scaffold e TopAppBar</a></li>
+        <li><a href="#alertdialog">AlertDialog</a></li>
+        <li><a href="#sqliteopenhelper">SQLiteOpenHelper</a></li>
+        <li><a href="#contentvalues">ContentValues e Cursor</a></li>
+    </ol>
+</nav>
+
+<div class="conteudo">
+
+<h2 id="composable">1. Interface declarativa com Compose</h2>
+
+<div class="item" id="composable-item">
+<h3>@Composable</h3>
+<div class="subtitulo">anotação do Jetpack Compose</div>
+<p>É a anotação que transforma uma função Kotlin comum numa "peça de interface". Em vez de montar a tela imperativamente (criar um botão, depois adicionar ele na tela, depois configurar o clique), a gente só descreve "como a tela deveria ser" pro estado atual, e o Compose desenha isso sozinho.</p>
+<p>Toda tela do projeto (<code>FeedScreen</code>, <code>LoginScreen</code> etc.) e todo componente reaproveitado (<code>CardPost</code>, <code>TopNavBar</code>) é uma função marcada com <code>@Composable</code>.</p>
+<pre>@Composable
+fun CardPost(username: String, ...) {
+    Card(...) { ... }
+}</pre>
+<p>Sempre que algum dado que a função usa muda, o Compose chama a função de novo (isso se chama "recomposição") e só atualiza na tela o que realmente mudou.</p>
+</div>
+
+<h2 id="estado">2. Estado da tela</h2>
+
+<div class="item" id="remember-item">
+<h3>remember e mutableStateOf</h3>
+<div class="subtitulo">androidx.compose.runtime</div>
+<p><code>mutableStateOf(valorInicial)</code> cria uma "caixinha" de estado: um valor que, quando muda, avisa o Compose pra redesenhar quem está usando ele. <code>remember { ... }</code> garante que esse valor não seja recriado do zero toda vez que a função for recomposta, ele "lembra" o valor entre recomposições.</p>
+<pre>var email by remember { mutableStateOf("") }</pre>
+<p>Usado em praticamente toda tela com campo de texto (<code>LoginScreen</code>, <code>RegisterScreen</code>, <code>PostScreen</code>) pra guardar o que o usuário está digitando.</p>
+<div class="onde">No projeto: campos de formulário, controle de "senha visível/escondida" no LoginScreen, e o id do post aguardando confirmação de exclusão no FeedScreen.</div>
+</div>
+
+<div class="item" id="by-item">
+<h3>O operador "by" (property delegation)</h3>
+<div class="subtitulo">recurso da linguagem Kotlin</div>
+<p>Sem o <code>by</code>, pra usar o valor de dentro de um <code>mutableStateOf</code> seria preciso escrever <code>email.value</code> toda vez. Com <code>by</code>, o Kotlin "delega" a leitura e escrita da variável direto pro <code>mutableStateOf</code>, então <code>email</code> se comporta como uma String normal.</p>
+<pre>var loading by mutableStateOf(false)
+    private set</pre>
+<p>Esse <code>private set</code> aparece em quase todo ViewModel do projeto: qualquer código pode ler o valor, mas só o próprio ViewModel pode alterá-lo. É assim que a tela nunca consegue mudar o estado "por fora", só através de uma função do ViewModel.</p>
+</div>
+
+<div class="item" id="launchedeffect-item">
+<h3>LaunchedEffect</h3>
+<div class="subtitulo">androidx.compose.runtime</div>
+<p>Roda um bloco de código suspenso (uma coroutine) quando a tela aparece, e roda de novo toda vez que a "chave" passada pra ele mudar. É a forma correta, dentro do Compose, de reagir a mudanças de estado ou disparar uma ação uma única vez.</p>
+<pre>LaunchedEffect(Unit) {
+    postViewModel.list()
+}</pre>
+<p>Com a chave <code>Unit</code> (que nunca muda), o bloco roda uma única vez, quando a tela é exibida pela primeira vez. É assim que o <code>FeedScreen</code> busca os posts assim que abre.</p>
+<pre>LaunchedEffect(authViewModel.done) {
+    if (authViewModel.done) {
+        authViewModel.consumeResult()
+        onLoginSuccess()
+    }
+}</pre>
+<p>Já aqui, a chave é o próprio estado <code>done</code>. Toda vez que ele mudar (de <code>false</code> pra <code>true</code>, quando o login dá certo), o bloco roda de novo e navega pro feed. É o mesmo mecanismo usado pra exigir login: em <code>AppNavigation.kt</code>, um <code>LaunchedEffect(destination, currentUser)</code> redireciona pro Login sempre que alguém tenta abrir uma rota protegida sem estar logado.</p>
+</div>
+
+<h2 id="listas">3. Listas</h2>
+
+<div class="item" id="lazycolumn-item">
+<h3>LazyColumn e items</h3>
+<div class="subtitulo">androidx.compose.foundation.lazy</div>
+<p>É a versão "preguiçosa" (lazy) de uma coluna com rolagem. A diferença pra uma <code>Column</code> normal dentro de um <code>scroll</code> é que a <code>LazyColumn</code> só desenha na memória os itens que estão realmente visíveis na tela (mais uma pequena margem), em vez de desenhar os 500 posts do banco de uma vez. Isso é essencial pra performance de uma lista que pode crescer bastante, como o feed.</p>
+<pre>LazyColumn {
+    item { CircularProgressIndicator() }
+    items(postViewModel.posts, key = { it.id }) { post ->
+        CardPost(...)
+    }
+}</pre>
+<p><code>item { }</code> adiciona um elemento único (tipo um cabeçalho). <code>items(lista, key = ...)</code> adiciona um elemento pra cada posição da lista. O parâmetro <code>key</code> ajuda o Compose a saber "qual item é qual" mesmo que a lista seja reordenada, evitando redesenhar tudo à toa.</p>
+<div class="onde">Usado no Feed, no Perfil (lista de posts do usuário) e na tela de Seguidores/Seguindo.</div>
+</div>
+
+<div class="item" id="rememberSaveable-item">
+<h3>rememberSaveable</h3>
+<div class="subtitulo">androidx.compose.runtime.saveable</div>
+<p>Igual ao <code>remember</code>, mas sobrevive também a uma troca de configuração do sistema (como girar a tela), porque o valor é salvo num <code>Bundle</code>, não só em memória. Usado pra guardar qual post está aguardando confirmação de exclusão, pra não perder esse estado se o usuário girar o celular no meio da confirmação.</p>
+<pre>var deleteId by rememberSaveable { mutableStateOf&lt;Long?&gt;(null) }</pre>
+</div>
+
+<h2 id="mvvm-comp">4. ViewModel e coroutines</h2>
+
+<div class="item" id="viewmodel-item">
+<h3>ViewModel e AndroidViewModel</h3>
+<div class="subtitulo">androidx.lifecycle</div>
+<p>Um <code>ViewModel</code> é uma classe que guarda o estado de uma tela de um jeito que sobrevive a recomposições e a mudanças de configuração (como girar o celular), porque ele não é recriado junto com a tela, ele fica "amarrado" ao ciclo de vida da tela/rota, não ao desenho dela.</p>
+<p><code>AndroidViewModel</code> é um <code>ViewModel</code> que já recebe o <code>Application</code> (contexto da aplicação) no construtor, necessário aqui porque os DAOs (<code>UserDAO</code>, <code>PostDAO</code>...) precisam de um <code>Context</code> pra abrir o banco.</p>
+<pre>class PostViewModel(application: Application)
+    : AndroidViewModel(application) {
+    private val dao = PostDAO(application)
+    var posts by mutableStateOf&lt;List&lt;Post&gt;&gt;(emptyList())
+        private set
+    ...
+}</pre>
+<p>A tela pega uma instância dele assim: <code>postViewModel: PostViewModel = viewModel()</code>. O Compose cuida de criar e reaproveitar essa instância sozinho.</p>
+</div>
+
+<div class="item" id="viewmodelscope-item">
+<h3>viewModelScope e coroutines (launch)</h3>
+<div class="subtitulo">androidx.lifecycle / kotlinx.coroutines</div>
+<p>Uma coroutine é uma forma de rodar código que pode "pausar" (por exemplo, esperando o banco responder) sem travar a interface do usuário enquanto espera. <code>viewModelScope</code> é um escopo de coroutine que já é cancelado automaticamente se o ViewModel for destruído, evitando vazamento de tarefa rodando à toa.</p>
+<pre>viewModelScope.launch {
+    try {
+        done = withContext(Dispatchers.IO) { op() }
+    } catch (e: Exception) {
+        message = "Ocorreu um erro inesperado."
+    } finally {
+        loading = false
+    }
+}</pre>
+<p>Esse padrão (função <code>run</code> privada dentro de cada ViewModel) se repete em <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code> e <code>FollowsViewModel</code>: controla o <code>loading</code>, roda a operação, e transforma qualquer erro numa mensagem amigável pra tela mostrar.</p>
+</div>
+
+<div class="item" id="dispatchers-item">
+<h3>Dispatchers.IO e withContext</h3>
+<div class="subtitulo">kotlinx.coroutines</div>
+<p>Acessar o banco de dados é uma operação de entrada/saída (I/O) que pode demorar uns milissegundos. Se isso rodasse na thread principal (a que desenha a tela), o app congelaria por um instante. <code>Dispatchers.IO</code> é um grupo de threads feito pra esse tipo de tarefa.</p>
+<pre>withContext(Dispatchers.IO) {
+    dao.create(userId, trimmedContent)
+}</pre>
+<p><code>withContext</code> troca pra essa thread só durante o bloco, executa o código ali, e volta pra thread principal automaticamente assim que termina, já com o resultado pronto pra atualizar o estado da tela com segurança.</p>
+</div>
+
+<h2 id="navegacao">5. Navegação entre telas</h2>
+
+<div class="item" id="navhost-item">
+<h3>NavHost, NavController e rotas @Serializable</h3>
+<div class="subtitulo">androidx.navigation.compose</div>
+<p><code>NavController</code> é o objeto que sabe pra onde o app está navegando e guarda o histórico de telas (pra o botão "voltar" funcionar). <code>NavHost</code> é o componente que declara todas as rotas possíveis e qual tela corresponde a cada uma.</p>
+<p>Cada rota é uma classe ou objeto Kotlin marcado com <code>@Serializable</code>, em vez de uma simples String como em projetos mais antigos. Isso dá segurança de tipos: é impossível, por exemplo, navegar pra tela de detalhe do post esquecendo de informar o <code>postId</code>, porque isso nem compila.</p>
+<pre>@Serializable
+data class DetailPost(val postId: Long)
+
+// ...
+composable&lt;DetailPost&gt; { backStackEntry ->
+    val rota = backStackEntry.toRoute&lt;DetailPost&gt;()
+    DetailPostScreen(postId = rota.postId, ...)
+}</pre>
+<p>Pra navegar, só se cria uma instância da rota: <code>navController.navigate(DetailPost(post.id))</code>.</p>
+</div>
+
+<div class="item" id="scaffold-item">
+<h3>Scaffold e TopAppBar</h3>
+<div class="subtitulo">androidx.compose.material3</div>
+<p><code>Scaffold</code> é um "esqueleto" de tela padrão do Material Design: já reserva o espaço certo pra uma barra do topo, conteúdo e eventualmente uma barra inferior, cuidando do espaçamento (<code>innerPadding</code>) sozinho. No projeto existe um único <code>Scaffold</code>, lá no <code>MainActivity</code>, que envolve a navegação inteira.</p>
+<pre>Scaffold(
+    topBar = { if (showTopBar) TopNavBar(navController) }
+) { innerPadding ->
+    AppNavigation(modifier = Modifier.padding(innerPadding))
+}</pre>
+<p><code>TopAppBar</code> (usado dentro do <code>TopNavBar</code>) é a barra fixa no topo com o nome do app e os ícones de ação (novo post, feed, perfil, sair). Ela só aparece quando a rota atual não é Login nem Cadastro.</p>
+</div>
+
+<div class="item" id="alertdialog-item">
+<h3>AlertDialog</h3>
+<div class="subtitulo">androidx.compose.material3</div>
+<p>Uma janela de confirmação que flutua por cima do resto da tela. Usada sempre que uma ação é irreversível, como excluir um post: em vez de excluir no primeiro clique, o botão "Excluir" só marca qual item deveria ser excluído, e o <code>AlertDialog</code> pede confirmação antes de chamar o ViewModel de verdade.</p>
+<pre>AlertDialog(
+    onDismissRequest = { deleteId = null },
+    title = { Text("Excluir post?") },
+    confirmButton = {
+        TextButton(onClick = {
+            deleteId = null
+            postViewModel.delete(post.id)
+        }) { Text("Excluir") }
+    },
+    dismissButton = {
+        TextButton(onClick = { deleteId = null }) { Text("Cancelar") }
+    }
+)</pre>
+</div>
+
+<h2 id="banco-comp">6. Banco de dados</h2>
+
+<div class="item" id="sqliteopenhelper-item">
+<h3>SQLiteOpenHelper</h3>
+<div class="subtitulo">android.database.sqlite</div>
+<p>É a classe base do Android pra criar e manter um banco SQLite, sem precisar de nenhuma biblioteca externa (nada de Room). Se estende essa classe e implementa dois métodos: <code>onCreate</code> (roda só na primeira vez que o app abre, cria todas as tabelas do zero) e <code>onUpgrade</code> (roda quando o número de versão do banco aumenta, aplica as mudanças de schema nos dados que já existem).</p>
+<pre>class AppDatabase(context: Context) : SQLiteOpenHelper(
+    context.applicationContext,
+    File(context.noBackupFilesDir, "mysocial.db").absolutePath,
+    null,
+    2 // versão do schema
+) {
+    override fun onCreate(db: SQLiteDatabase) { ... }
+    override fun onUpgrade(db, oldVersion, newVersion) { ... }
+}</pre>
+<p><code>writableDatabase</code> abre o banco em modo leitura e escrita (usado pra INSERT/UPDATE/DELETE). <code>readableDatabase</code> abre só pra leitura (usado nas buscas). Os DAOs sempre usam <code>AppDatabase(context).use { db -&gt; ... }</code>, o <code>use</code> garante que a conexão é fechada sozinha ao final, mesmo se der erro no meio.</p>
+</div>
+
+<div class="item" id="contentvalues-item">
+<h3>ContentValues e Cursor</h3>
+<div class="subtitulo">android.content / android.database</div>
+<p><code>ContentValues</code> é um mapa de "nome da coluna" para "valor", usado pra montar um INSERT ou UPDATE sem concatenar texto (o que abriria brecha pra SQL Injection).</p>
+<pre>val values = ContentValues().apply {
+    put("username", username)
+    put("email", email)
+}
+db.writableDatabase.insertOrThrow("users", null, values)</pre>
+<p><code>Cursor</code> é o objeto que representa o resultado de uma consulta (<code>query</code> ou <code>rawQuery</code>), uma linha por vez. <code>cursor.moveToNext()</code> avança pra próxima linha, e <code>cursor.getLong(0)</code>/<code>getString(1)</code> leem o valor de cada coluna pela posição.</p>
+<pre>db.readableDatabase.query(
+    "users", arrayOf("id", "username", "email"),
+    "id = ?", arrayOf(id.toString()),
+    null, null, null
+).use { cursor ->
+    if (cursor.moveToFirst())
+        User(cursor.getLong(0), cursor.getString(1), cursor.getString(2))
+    else null
+}</pre>
+<p>Repare no <code>"id = ?"</code> com <code>arrayOf(id.toString())</code> logo depois: esse é o "bind parameter". O SQLite substitui o <code>?</code> pelo valor de forma segura, nunca interpretando o conteúdo como parte do comando SQL. É assim que todo o projeto se protege de SQL Injection.</p>
+</div>
+
+</div>
+
+<footer>
+    Documento gerado como material de apoio interno do projeto MySocial (trabalho acadêmico), pra ajudar a equipe a entender e defender o código nas partes que não desenvolveu diretamente.
+</footer>
+
+</body>
+</html>
