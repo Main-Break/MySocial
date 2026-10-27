@@ -1,5 +1,7 @@
 package com.mysocial.ui.screen
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,9 +21,13 @@ import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.Username
 import com.mysocial.ui.viewmodel.PostViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 // Tela onde será exibido os posts do programa
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
@@ -57,14 +63,21 @@ fun FeedScreen(
             }
         }
 
+        // Fomatação de Data do Java/Kotlin
+
         items(postViewModel.posts, key = { it.id }) { post ->
+
+            // Formata data para exibição no Post.
+            val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
+            val date = LocalDateTime.parse(post.createdAt)
+
             // amountComments/amountLikes ainda ficam fixos em 0: o banco ainda não tem
             // tabela de curtidas/comentários, só de posts.
             CardPost(
                 username = post.author,
                 name = post.author,
                 contentPost = post.content,
-                datePost = post.createdAt,
+                datePost = date.format(formatter),
                 amountComments = 0,
                 amountLikes = 0
             )
@@ -73,6 +86,7 @@ fun FeedScreen(
 }
 
 // Para vizualizar a tela
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun FeedScreenPreview() {
