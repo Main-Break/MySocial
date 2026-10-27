@@ -39,21 +39,32 @@
         margin-top: 34px;
         margin-bottom: 8px;
         background: #f4f6f8;
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
-    .item { break-inside: avoid; margin-bottom: 20px; }
+    .item { margin-bottom: 20px; }
     .item h3 {
         margin-top: 0;
         margin-bottom: 2px;
         color: #0d6ab0;
         font-family: "Consolas", monospace;
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
     .item .subtitulo {
         font-size: 0.78em;
         color: #888;
         margin-bottom: 6px;
         font-style: italic;
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
-    p { margin: 5px 0; font-size: 0.92em; }
+    p {
+        margin: 5px 0;
+        font-size: 0.92em;
+        orphans: 3;
+        widows: 3;
+    }
     code {
         background: #f0f0f0;
         padding: 1px 5px;
@@ -68,7 +79,6 @@
         border-radius: 6px;
         overflow-x: auto;
         font-size: 0.74em;
-        break-inside: avoid;
         margin: 6px 0;
     }
     .onde {
@@ -85,6 +95,19 @@
         padding-top: 12px;
         font-size: 0.8em;
         color: #777;
+    }
+
+    /* Impressão em preto e branco: troca cores por tons neutros, pra não gastar
+       tinta colorida nem ficar ilegível numa impressora P&B. */
+    @media print {
+        h2 { border-left-color: #000; background: #eee; }
+        .item h3 { color: #000; }
+        header { border-bottom-color: #000; }
+        header p, nav#sumario a, footer, .item .subtitulo { color: #333 !important; }
+        nav#sumario { background: #f2f2f2; border-color: #999; }
+        nav#sumario a { color: #000; text-decoration: underline; }
+        .onde { background: #f2f2f2; border-left-color: #000; }
+        pre { background: #f2f2f2; color: #111; border: 1px solid #999; }
     }
 </style>
 </head>

@@ -39,13 +39,24 @@
         margin-top: 32px;
         margin-bottom: 8px;
         background: #f4f6f8;
+        /* Nunca deixa o título sozinho no fim da página, sem o conteúdo dele junto. */
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
     h3 {
         margin-top: 18px;
         margin-bottom: 4px;
         color: #0d6ab0;
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
-    p { margin: 6px 0; font-size: 0.95em; }
+    p {
+        margin: 6px 0;
+        font-size: 0.95em;
+        /* Evita deixar só 1-2 linhas sozinhas no topo/fim de uma página. */
+        orphans: 3;
+        widows: 3;
+    }
     code {
         background: #f0f0f0;
         padding: 1px 5px;
@@ -60,7 +71,6 @@
         border-radius: 6px;
         overflow-x: auto;
         font-size: 0.78em;
-        break-inside: avoid;
     }
     .caixa {
         background: #fffbe6;
@@ -69,7 +79,6 @@
         padding: 8px 12px;
         margin: 10px 0;
         font-size: 0.88em;
-        break-inside: avoid;
     }
     ul { margin: 4px 0; padding-left: 20px; font-size: 0.95em; }
     table {
@@ -88,6 +97,21 @@
         padding-top: 12px;
         font-size: 0.8em;
         color: #777;
+    }
+
+    /* Impressão em preto e branco: troca cores por tons neutros, pra não gastar
+       tinta colorida nem ficar ilegível numa impressora P&B. */
+    @media print {
+        h2 { border-left-color: #000; background: #eee; }
+        h3 { color: #000; }
+        header { border-bottom-color: #000; }
+        header p, nav#sumario a, footer { color: #333 !important; }
+        nav#sumario { background: #f2f2f2; border-color: #999; }
+        nav#sumario a { color: #000; text-decoration: underline; }
+        .caixa { background: #f2f2f2; border-color: #999; }
+        pre { background: #f2f2f2; color: #111; border: 1px solid #999; }
+        th { background: #e0e0e0; }
+        table, th, td { border-color: #666; }
     }
 </style>
 </head>
