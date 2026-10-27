@@ -32,14 +32,15 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Busca o hash da senha e o salt de um usuário pelo e-mail, usado só na hora do login.
-    // Devolve null se não existir ninguém com esse e-mail.
-    fun findPassword(email: String): StoredPassword? = AppDatabase(appContext).use { db ->
+    // Busca o hash da senha e o salt de um usuário pelo e-mail OU pelo username (o login
+    // aceita os dois, igual ao X). "COLLATE NOCASE" no username deixa a busca sem
+    // diferenciar maiúscula/minúscula. Devolve null se não existir ninguém com esse dado.
+    fun findPassword(identifier: String): StoredPassword? = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
             "users",
             arrayOf("password", "salt", "id"),
-            "email = ?",
-            arrayOf(email),
+            "email = ? OR username = ? COLLATE NOCASE",
+            arrayOf(identifier, identifier),
             null, null, null
         ).use { cursor ->
             if (cursor.moveToFirst()) StoredPassword(

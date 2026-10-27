@@ -43,7 +43,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = { },
     authViewModel: AuthViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("") }
+    // Aceita tanto e-mail quanto @username, ver AuthViewModel.login.
+    var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     // Controla se a senha aparece em texto ou escondida (bolinhas), junto com o ícone de olho.
     var passwordVisible by remember { mutableStateOf(false) }
@@ -81,10 +82,10 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { if (it.length <= 254) email = it },
+            value = identifier,
+            onValueChange = { if (it.length <= 254) identifier = it },
             label = {
-                Text("E-mail")
+                Text("E-mail ou @username")
             },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -127,11 +128,11 @@ fun LoginScreen(
         Button(
             onClick = {
                 // Dispara o login de verdade (acesso ao banco) no AuthViewModel.
-                authViewModel.login(email, password)
+                authViewModel.login(identifier, password)
                 // Limpa o campo de senha da tela por segurança, já foi enviado.
                 password = ""
             },
-            enabled = !authViewModel.loading && email.isNotEmpty() && password.isNotEmpty(),
+            enabled = !authViewModel.loading && identifier.isNotEmpty() && password.isNotEmpty(),
             shape = MaterialTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor),
             modifier = Modifier.fillMaxWidth()

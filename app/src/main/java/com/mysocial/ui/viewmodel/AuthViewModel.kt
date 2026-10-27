@@ -81,14 +81,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Confere e-mail/senha contra o que está salvo no banco. Se bater, marca a sessão
-    // como logada (UserSession.start).
-    fun login(email: String, password: String) = run {
-        require(email.length <= 254 && password.length in 6..128) {
-            "E-mail ou senha inválidos"
+    // Confere e-mail (ou @username) + senha contra o que está salvo no banco. Se bater,
+    // marca a sessão como logada (UserSession.start).
+    fun login(identifier: String, password: String) = run {
+        require(identifier.length <= 254 && password.length in 6..128) {
+            "E-mail/usuário ou senha inválidos"
         }
+        // Remove o "@" caso a pessoa digite "@username" (igual ao X), e ignora
+        // maiúscula/minúscula tanto no e-mail quanto no username.
+        val trimmedIdentifier = identifier.trim().removePrefix("@").lowercase(Locale.ROOT)
         val authenticatedId = withContext(Dispatchers.IO) {
-            val stored = dao.findPassword(email.trim().lowercase(Locale.ROOT))
+            val stored = dao.findPassword(trimmedIdentifier)
             // Mesmo se o e-mail não existir, gera um hash de um valor "vazio" aqui embaixo,
             // só pra a operação demorar um tempo parecido com a de um e-mail que existe.
             // Isso evita que alguém descubra quais e-mails estão cadastrados só medindo
