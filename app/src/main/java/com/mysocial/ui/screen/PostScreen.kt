@@ -7,7 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -29,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
@@ -72,6 +77,12 @@ fun PostScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            // Empurra o conteúdo pra cima do teclado quando ele abre, em vez de deixar
+            // o Compose redimensionar a tela inteira a cada tecla (isso, combinado com
+            // windowSoftInputMode="adjustResize" no Manifest, é a causa mais comum de
+            // acento/composição de teclado "sumir" no meio da digitação).
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(Dimens.spaceLarge)
     ) {
         // Cabeçalho: "X" pra voltar sem publicar nada, e o botão de publicar/salvar
@@ -127,7 +138,7 @@ fun PostScreen(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .heightIn(min = 220.dp)
         )
 
         // Contador "123/280", alinhado à direita, igual ao X.

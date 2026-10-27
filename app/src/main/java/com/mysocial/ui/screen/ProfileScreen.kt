@@ -97,8 +97,10 @@ fun ProfileScreen(
             if (user != null) {
                 val corCapa = Color(android.graphics.Color.parseColor(user.coverColor))
 
-                // Capa colorida com o avatar grande sobreposto na parte de baixo,
-                // igual ao cabeçalho de perfil do X.
+                // Capa colorida com o avatar grande sobreposto na parte de baixo, e o
+                // botão de Seguir/Editar perfil flutuando no canto superior direito, na
+                // mesma altura do avatar. Esse é exatamente o layout do cabeçalho de
+                // perfil do X: o botão NUNCA fica empilhado junto com nome/bio embaixo.
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Box(
                         modifier = Modifier
@@ -123,6 +125,39 @@ fun ProfileScreen(
                             contentDescription = "Foto de perfil",
                             modifier = Modifier.size(Dimens.avatarSizeLarge - Dimens.spaceLarge)
                         )
+                    }
+
+                    // Botão flutuante: alinhado à direita, descido até a altura do
+                    // centro do avatar (coverHeight menos metade da altura do botão).
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(end = Dimens.spaceLarge)
+                            .offset(y = Dimens.coverHeight - Dimens.spaceLarge)
+                    ) {
+                        // No próprio perfil mostra "Editar perfil"; no de outra pessoa,
+                        // mostra o botão de seguir/deixar de seguir.
+                        if (UserSession.userId == userId) {
+                            OutlinedButton(
+                                onClick = onNavigateToEditProfile,
+                                shape = MaterialTheme.shapes.large
+                            ) { Text("Editar perfil") }
+                        } else if (UserSession.userId != null) {
+                            if (profileViewModel.isFollowing) {
+                                OutlinedButton(
+                                    onClick = { profileViewModel.unfollow(userId) },
+                                    enabled = !profileViewModel.loading,
+                                    shape = MaterialTheme.shapes.large
+                                ) { Text("Deixar de seguir") }
+                            } else {
+                                Button(
+                                    onClick = { profileViewModel.follow(userId) },
+                                    enabled = !profileViewModel.loading,
+                                    shape = MaterialTheme.shapes.large,
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
+                                ) { Text("Seguir") }
+                            }
+                        }
                     }
                 }
 
@@ -159,25 +194,6 @@ fun ProfileScreen(
                         Row(modifier = Modifier.clickable { onNavigateToFollows(TypeListFollows.FOLLOW) }) {
                             Text("${profileViewModel.followingCount} ")
                             Text("Seguindo", color = Username)
-                        }
-                    }
-
-                    // No próprio perfil mostra "Editar perfil"; no de outra pessoa,
-                    // mostra o botão de seguir/deixar de seguir.
-                    if (UserSession.userId == userId) {
-                        OutlinedButton(onClick = onNavigateToEditProfile) { Text("Editar perfil") }
-                    } else if (UserSession.userId != null) {
-                        if (profileViewModel.isFollowing) {
-                            OutlinedButton(
-                                onClick = { profileViewModel.unfollow(userId) },
-                                enabled = !profileViewModel.loading
-                            ) { Text("Deixar de seguir") }
-                        } else {
-                            Button(
-                                onClick = { profileViewModel.follow(userId) },
-                                enabled = !profileViewModel.loading,
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
-                            ) { Text("Seguir") }
                         }
                     }
                 }
