@@ -125,11 +125,13 @@
 <p>O MySocial é um app de rede social no estilo do X: qualquer pessoa cadastrada pode publicar posts de até 280 caracteres, seguir outras pessoas e ver um feed com os posts mais recentes.</p>
 <p>Funcionalidades implementadas:</p>
 <ul>
-    <li>Cadastro e login com senha protegida por hash (nunca texto puro).</li>
+    <li>Cadastro e login (com e-mail ou @username) com senha protegida por hash (nunca texto puro).</li>
     <li>Controle de sessão (quem está logado agora).</li>
     <li>Feed de posts, mais recente primeiro.</li>
-    <li>Criar, editar e excluir post (CRUD completo).</li>
-    <li>Perfil de usuário com contagem de seguidores e seguindo.</li>
+    <li>Criar, editar e excluir post (CRUD completo), com compositor estilo X (campo grande, sem caixa, "X" pra fechar).</li>
+    <li>Perfil de usuário com bio, endereço e contagem de seguidores e seguindo.</li>
+    <li>Editar o próprio perfil (bio e endereço: CEP, rua, número, bairro, cidade, estado).</li>
+    <li>Busca de usuários por username, pra achar alguém e seguir.</li>
     <li>Seguir e deixar de seguir outro usuário.</li>
     <li>Lista de seguidores e de quem o usuário segue, com abas pra trocar entre as duas (igual ao X).</li>
     <li>Tela de detalhe de um post, com curtida e comentários.</li>
@@ -151,13 +153,13 @@
 <p><code>Routes.kt</code> define cada tela do app como uma classe/objeto serializável. <code>AppNavigation.kt</code> monta o <code>NavHost</code> que liga cada rota à tela correspondente e decide pra onde navegar quando uma ação termina.</p>
 
 <h3>ui/screen/</h3>
-<p>As telas em si (um <code>@Composable</code> por arquivo): Login, Cadastro, Feed, Post (criar/editar), Perfil, Seguidores/Seguindo e Detalhe do Post.</p>
+<p>As telas em si (um <code>@Composable</code> por arquivo): Login, Cadastro, Feed, Post (criar/editar), Perfil, Editar Perfil, Seguidores/Seguindo, Busca de Usuários e Detalhe do Post.</p>
 
 <h3>ui/component/</h3>
-<p>Pedaços de interface reaproveitados em mais de uma tela, como o <code>CardPost</code> (card de um post) e o <code>TopNavBar</code> (barra do topo).</p>
+<p>Pedaços de interface reaproveitados em mais de uma tela: <code>CardPost</code> (linha de um post no feed/perfil/detalhe), <code>UserRow</code> (linha de um usuário na busca e na lista de seguidores/seguindo) e <code>TopNavBar</code> (barra do topo).</p>
 
 <h3>ui/viewmodel/</h3>
-<p>A "ponte" entre a tela e o banco de dados: <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code>, <code>FollowsViewModel</code>, <code>CommentViewModel</code>. Nenhuma tela acessa um DAO diretamente, sempre passa por um ViewModel.</p>
+<p>A "ponte" entre a tela e o banco de dados: <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code>, <code>FollowsViewModel</code>, <code>CommentViewModel</code>, <code>UsersViewModel</code>. Nenhuma tela acessa um DAO diretamente, sempre passa por um ViewModel.</p>
 
 <h3>ui/theme/</h3>
 <p>Cores, espaçamentos (<code>Dimens</code>) e tipografia do app. Centralizado aqui pra não espalhar número/cor mágica pelo código das telas.</p>
@@ -189,8 +191,8 @@
 <div class="caixa">Esse mesmo padrão (tela chama função, ViewModel valida e grava, estado muda, tela reage) se repete em todas as outras operações: login, cadastro, editar post, seguir alguém, etc.</div>
 
 <h2 id="banco">5. Banco de dados e migração automática</h2>
-<p>O banco é SQLite puro, sem Room nem nenhum ORM, acessado via <code>SQLiteOpenHelper</code> (classe <code>AppDatabase</code>). Cinco tabelas: <code>users</code> (com a coluna <code>cover_color</code>, a cor de capa do perfil), <code>posts</code>, <code>follows</code>, <code>likes</code> e <code>comments</code>.</p>
-<p>O schema inteiro e atualizado vive dentro do método <code>onCreate</code>, num lugar só (nunca espalhado em vários arquivos "update_1.sql", "update_2.sql" etc.). Quando uma tabela ou coluna nova é adicionada depois (como aconteceu com <code>follows</code> na versão 2, e com <code>cover_color</code>/<code>likes</code>/<code>comments</code> na versão 3), o número da versão do banco sobe, e o método <code>onUpgrade</code> aplica a diferença sozinho, na hora que o app abre, sem precisar de nenhum passo manual.</p>
+<p>O banco é SQLite puro, sem Room nem nenhum ORM, acessado via <code>SQLiteOpenHelper</code> (classe <code>AppDatabase</code>). Cinco tabelas: <code>users</code> (com <code>cover_color</code>, a cor de capa do perfil, e os campos de bio/endereço: <code>bio</code>, <code>cep</code>, <code>rua</code>, <code>numero</code>, <code>bairro</code>, <code>cidade</code>, <code>estado</code>), <code>posts</code>, <code>follows</code>, <code>likes</code> e <code>comments</code>.</p>
+<p>O schema inteiro e atualizado vive dentro do método <code>onCreate</code>, num lugar só (nunca espalhado em vários arquivos "update_1.sql", "update_2.sql" etc.). Quando uma tabela ou coluna nova é adicionada depois (follows na versão 2, cover_color/likes/comments na versão 3, bio/endereço na versão 4), o número da versão do banco sobe, e o método <code>onUpgrade</code> aplica a diferença sozinho, na hora que o app abre, sem precisar de nenhum passo manual.</p>
 <pre>override fun onUpgrade(db, oldVersion, newVersion) {
     if (oldVersion &lt; 2) {
         db.execSQL("CREATE TABLE follows(...)")
@@ -199,6 +201,11 @@
         db.execSQL("ALTER TABLE users ADD COLUMN cover_color ...")
         db.execSQL("CREATE TABLE likes(...)")
         db.execSQL("CREATE TABLE comments(...)")
+    }
+    if (oldVersion &lt; 4) {
+        db.execSQL("ALTER TABLE users ADD COLUMN bio ...")
+        db.execSQL("ALTER TABLE users ADD COLUMN cep ...")
+        // (e o resto dos campos de endereço, mesma ideia)
     }
 }</pre>
 <p>Isso evita o problema clássico de "esqueceram de rodar a migração em produção": quem já tinha o app instalado numa versão antiga recebe a tabela/coluna nova automaticamente, sem perder os dados que já existiam.</p>
@@ -221,7 +228,9 @@
 <tr><td><code>EditPost(postId)</code></td><td>Editar post</td><td>Sim, só o dono</td></tr>
 <tr><td><code>DetailPost(postId)</code></td><td>Detalhe do post</td><td>Sim</td></tr>
 <tr><td><code>Profile(userId)</code></td><td>Perfil de um usuário</td><td>Sim</td></tr>
+<tr><td><code>EditProfile</code></td><td>Editar o próprio perfil</td><td>Sim</td></tr>
 <tr><td><code>Follows(userId, type)</code></td><td>Seguidores ou seguindo</td><td>Sim</td></tr>
+<tr><td><code>Users</code></td><td>Busca de usuários</td><td>Sim</td></tr>
 </table>
 <p>Quem tenta acessar uma rota protegida sem estar logado é redirecionado pro Login automaticamente (lógica dentro de um <code>LaunchedEffect</code> em <code>AppNavigation.kt</code>). As telas de Login e Cadastro são as únicas sem a barra de navegação do topo.</p>
 

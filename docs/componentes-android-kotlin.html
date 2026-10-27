@@ -112,6 +112,7 @@
         <li><a href="#launchedeffect">LaunchedEffect</a></li>
         <li><a href="#lazycolumn">LazyColumn e items</a></li>
         <li><a href="#rememberSaveable">rememberSaveable</a></li>
+        <li><a href="#textfield">TextField sem caixa (compositor estilo X)</a></li>
         <li><a href="#viewmodel">ViewModel e AndroidViewModel</a></li>
         <li><a href="#viewmodelscope">viewModelScope e coroutines</a></li>
         <li><a href="#dispatchers">Dispatchers.IO e withContext</a></li>
@@ -199,6 +200,25 @@ fun CardPost(username: String, ...) {
 <div class="subtitulo">androidx.compose.runtime.saveable</div>
 <p>Igual ao <code>remember</code>, mas sobrevive também a uma troca de configuração do sistema (como girar a tela), porque o valor é salvo num <code>Bundle</code>, não só em memória. Usado pra guardar qual post está aguardando confirmação de exclusão, pra não perder esse estado se o usuário girar o celular no meio da confirmação.</p>
 <pre>var deleteId by rememberSaveable { mutableStateOf&lt;Long?&gt;(null) }</pre>
+</div>
+
+<div class="item" id="textfield-item">
+<h3>TextField sem caixa (compositor estilo X)</h3>
+<div class="subtitulo">androidx.compose.material3 (mesma família do OutlinedTextField do professor)</div>
+<p><code>TextField</code> é o "primo" do <code>OutlinedTextField</code> que o professor ensina: os dois vêm do mesmo pacote e funcionam igual (<code>value</code>, <code>onValueChange</code>, etc.), só muda o visual padrão. O compositor de post/comentário usa <code>TextField</code> com as cores do fundo e da linha inferior deixadas transparentes, pra não aparecer nenhuma caixa, só o texto digitado, igual ao campo "O que está acontecendo?" do X.</p>
+<pre>TextField(
+    value = content,
+    onValueChange = { ... },
+    placeholder = { Text("O que está acontecendo?") },
+    minLines = 6,
+    colors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent
+    )
+)</pre>
+<p><code>minLines</code> faz o campo já nascer com várias linhas de altura, em vez de uma linha só que cresce aos poucos. O resto (limite de caracteres, validação) continua exatamente igual ao <code>OutlinedTextField</code> usado nos outros formulários do projeto (Login, Cadastro, Editar Perfil).</p>
 </div>
 
 <h2 id="mvvm-comp">4. ViewModel e coroutines</h2>
