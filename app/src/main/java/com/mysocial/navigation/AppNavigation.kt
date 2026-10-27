@@ -11,7 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.mysocial.auth.UserSession
+import com.mysocial.ui.screen.DetailPostScreen
 import com.mysocial.ui.screen.FeedScreen
+import com.mysocial.ui.screen.FollowsScreen
 import com.mysocial.ui.screen.LoginScreen
 import com.mysocial.ui.screen.PostScreen
 import com.mysocial.ui.screen.ProfileScreen
@@ -68,7 +70,8 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
         // Tela principal com os posts, lendo direto do banco de dados.
         composable<Feed> {
             FeedScreen(
-                onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) }
+                onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) },
+                onNavigateToDetail = { postId -> navController.navigate(DetailPost(postId)) }
             )
         }
 
@@ -88,10 +91,36 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
             )
         }
 
-        // Tela de perfil do usuário. Ainda é só um placeholder (sem dados reais), a tela
-        // de perfil em si não foi pedida ainda.
-        composable<Profile> {
-            ProfileScreen(name = "Android")
+        // Tela de perfil de um usuário: dados, posts, seguidores/seguindo.
+        composable<Profile> { backStackEntry ->
+            val rota = backStackEntry.toRoute<Profile>()
+            ProfileScreen(
+                userId = rota.userId,
+                onNavigateToFollows = { type -> navController.navigate(Follows(rota.userId, type)) },
+                onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) },
+                onNavigateToDetail = { postId -> navController.navigate(DetailPost(postId)) }
+            )
+        }
+
+        // Tela de lista de seguidores/seguindo de um usuário.
+        composable<Follows> { backStackEntry ->
+            val rota = backStackEntry.toRoute<Follows>()
+            FollowsScreen(
+                userId = rota.userId,
+                type = rota.type,
+                onNavigateToProfile = { userId -> navController.navigate(Profile(userId)) }
+            )
+        }
+
+        // Tela de detalhe de um post, com editar/excluir pra quem é dono dele.
+        composable<DetailPost> { backStackEntry ->
+            val rota = backStackEntry.toRoute<DetailPost>()
+            DetailPostScreen(
+                postId = rota.postId,
+                onNavigateToProfile = { userId -> navController.navigate(Profile(userId)) },
+                onNavigateToEditPost = { postId -> navController.navigate(EditPost(postId)) },
+                voltar = { navController.popBackStack() }
+            )
         }
     }
 }

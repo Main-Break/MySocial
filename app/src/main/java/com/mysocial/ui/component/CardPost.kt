@@ -1,6 +1,7 @@
 package com.mysocial.ui.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,11 +42,15 @@ fun CardPost(
     // (mesma regra de dono que já existe no PostDAO).
     isOwner: Boolean = false,
     onEditClick: () -> Unit = {},
-    onDeleteClick: () -> Unit = {}
+    onDeleteClick: () -> Unit = {},
+    // Clicar em qualquer parte do card (menos os botões de Editar/Excluir) abre o post
+    // na tela de detalhe.
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
-            .padding(Dimens.spaceSmall),
+            .padding(Dimens.spaceSmall)
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = DarkBackground),
 
         // Define o estilo da borda.

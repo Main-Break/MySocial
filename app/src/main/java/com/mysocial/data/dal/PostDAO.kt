@@ -84,6 +84,29 @@ internal class PostDAO(context: Context) {
         }
     }
 
+    // Busca um post qualquer pelo id, sem checar dono. Usado na tela de detalhe do post,
+    // que qualquer pessoa logada pode visualizar (diferente do findById(id, userId) logo
+    // abaixo, que é só pra carregar a tela de edição do próprio dono).
+    fun findById(id: Long): Post? = AppDatabase(appContext).use { db ->
+        db.readableDatabase.rawQuery(
+            """
+            SELECT posts.id, posts.user_id, users.username, posts.content, posts.created_at
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            WHERE posts.id = ?
+            """.trimIndent(),
+            arrayOf(id.toString())
+        ).use { cursor ->
+            if (cursor.moveToFirst()) Post(
+                id = cursor.getLong(0),
+                userId = cursor.getLong(1),
+                author = cursor.getString(2),
+                content = cursor.getString(3),
+                createdAt = cursor.getString(4)
+            ) else null
+        }
+    }
+
     // Busca um post específico, mas só se pertencer ao usuário informado (mesma ideia de
     // segurança do update/delete abaixo). Usado pra carregar os dados na tela de edição.
     fun findById(id: Long, currentUserId: Long): Post? = AppDatabase(appContext).use { db ->

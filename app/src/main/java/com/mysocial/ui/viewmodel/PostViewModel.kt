@@ -42,6 +42,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     var editTarget by mutableStateOf<Post?>(null)
         private set
 
+    // Post carregado pra tela de detalhe (ver loadForView). Diferente do editTarget,
+    // qualquer post pode ser visualizado, não só os do usuário logado.
+    var viewingPost by mutableStateOf<Post?>(null)
+        private set
+
     // Mesma ideia do "run" do AuthViewModel: evita clique duplo e transforma erro
     // numa mensagem amigável.
     private fun run(operation: suspend () -> Unit) {
@@ -85,6 +90,13 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         published = false
     }
 
+    // Busca um post qualquer pra mostrar na tela de detalhe.
+    fun loadForView(id: Long) = run {
+        val post = withContext(Dispatchers.IO) { dao.findById(id) }
+        requireNotNull(post) { "Post não encontrado" }
+        viewingPost = post
+    }
+
     // Busca um post do usuário logado pra preencher a tela de edição.
     fun loadForEdit(id: Long) = run {
         val userId = UserSession.requireUser()
@@ -104,10 +116,12 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Exclui um post do usuário logado e já tira ele da lista em tela, sem precisar
-    // recarregar tudo de novo do banco.
+    // recarregar tudo de novo do banco. Também marca "published" como sinal de operação
+    // concluída, pra telas como a de detalhe do post saberem que já podem voltar.
     fun delete(id: Long) = run {
         val userId = UserSession.requireUser()
         withContext(Dispatchers.IO) { dao.delete(id, userId) }
         posts = posts.filterNot { it.id == id }
+        published = true
     }
 }

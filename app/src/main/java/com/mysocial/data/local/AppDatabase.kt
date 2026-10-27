@@ -13,7 +13,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     // já que ele guarda senha (mesmo em hash) e dado de usuário.
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    1 // versão do schema, usada pelo onUpgrade logo abaixo
+    2 // versão do schema, usada pelo onUpgrade logo abaixo
 ) {
     // Roda só uma vez, na primeira vez que o app abre e o banco ainda não existe.
     // Aqui fica o schema completo e atual do banco (sempre consolidado, nunca espalhado
@@ -41,6 +41,16 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             created_at TEXT NOT NULL
             )
         """.trimIndent())
+
+        // Tabela de quem segue quem. "follower_id" é quem segue, "followed_id" é quem é
+        // seguido. A chave primária composta impede seguir a mesma pessoa duas vezes.
+        db.execSQL("""
+            CREATE TABLE follows(
+            follower_id INTEGER NOT NULL REFERENCES users(id),
+            followed_id INTEGER NOT NULL REFERENCES users(id),
+            PRIMARY KEY (follower_id, followed_id)
+            )
+        """.trimIndent())
     }
 
     // Roda sozinho, automaticamente, sempre que o app abre e percebe que a versão do banco
@@ -51,5 +61,16 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     // sem apagar os ifs de versões anteriores, pra quem estiver em qualquer versão antiga
     // conseguir migrar sozinho, sem perder dado e sem precisar de ninguém rodar nada à mão.
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Quem já tinha o banco na versão 1 (sem a tabela follows) ganha ela aqui,
+        // sem perder os dados de users/posts que já existiam.
+        if (oldVersion < 2) {
+            db.execSQL("""
+                CREATE TABLE follows(
+                follower_id INTEGER NOT NULL REFERENCES users(id),
+                followed_id INTEGER NOT NULL REFERENCES users(id),
+                PRIMARY KEY (follower_id, followed_id)
+                )
+            """.trimIndent())
+        }
     }
 }

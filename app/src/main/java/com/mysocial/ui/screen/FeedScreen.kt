@@ -39,6 +39,7 @@ import java.util.Locale
 fun FeedScreen(
     modifier: Modifier = Modifier,
     onNavigateToEditPost: (Long) -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
     postViewModel: PostViewModel = viewModel()
 ) {
     // Busca os posts assim que a tela abre.
@@ -95,7 +96,8 @@ fun FeedScreen(
                 amountLikes = 0,
                 isOwner = post.userId == UserSession.userId,
                 onEditClick = { onNavigateToEditPost(post.id) },
-                onDeleteClick = { deleteId = post.id }
+                onDeleteClick = { deleteId = post.id },
+                onClick = { onNavigateToDetail(post.id) }
             )
         }
     }
