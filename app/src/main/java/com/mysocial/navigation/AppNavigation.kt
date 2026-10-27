@@ -18,6 +18,7 @@ import com.mysocial.ui.screen.LoginScreen
 import com.mysocial.ui.screen.PostScreen
 import com.mysocial.ui.screen.ProfileScreen
 import com.mysocial.ui.screen.RegisterScreen
+import com.mysocial.ui.screen.UsersScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -108,6 +109,13 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
             FollowsScreen(
                 userId = rota.userId,
                 type = rota.type,
+                onNavigateToProfile = { userId -> navController.navigate(Profile(userId)) }
+            )
+        }
+
+        // Tela de busca/lista de usuários, pra achar alguém e ir pro perfil dela.
+        composable<Users> {
+            UsersScreen(
                 onNavigateToProfile = { userId -> navController.navigate(Profile(userId)) }
             )
         }

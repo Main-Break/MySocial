@@ -1,6 +1,5 @@
 package com.mysocial.ui.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,15 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,18 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import com.mysocial.R
-import com.mysocial.ui.theme.DarkBackground
+import com.mysocial.ui.theme.DarkBorder
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.ErrorColor
 import com.mysocial.ui.theme.LikeColor
-import com.mysocial.ui.theme.OnPrimaryColor
 import com.mysocial.ui.theme.Username
 
-// Card de um post no feed. Mesmo padrão de lista do professor (UsuarioScreen): um Card
-// por item, com Column(verticalArrangement = spacedBy(...)) por dentro. O visual (avatar
-// circular, menu de três pontinhos, curtida) segue o jeito do X/Twitter mobile.
+// Uma linha de post no feed, no estilo do X: sem card/borda em volta, só uma linha
+// divisória fina embaixo separando um post do outro (ver HorizontalDivider no final
+// da função). O visual (avatar circular, menu de três pontinhos, curtida) segue o
+// jeito do X/Twitter mobile.
 @Composable
 fun CardPost(
     username: String,
@@ -72,112 +68,108 @@ fun CardPost(
     // ícone de "⋮" pra não deixar as opções evidentes na tela, só quem é dono as vê.
     var menuAberto by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth()
-            .padding(Dimens.spaceSmall)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = DarkBackground),
-
-        // Define o estilo da borda.
-        border = BorderStroke(0.5.dp, OnPrimaryColor),
-
-        // Define o arredondamento da borda.
-        shape = RoundedCornerShape(10.dp)
-
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = Dimens.postHorizontalPadding,
+                vertical = Dimens.postVerticalPadding
+            ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = Dimens.postHorizontalPadding,
-                    vertical = Dimens.postVerticalPadding
-                ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
+            // Avatar: círculo colorido (cor do perfil do autor) com o ícone padrão
+            // de pessoa dentro, mesmo jeito que o professor usa Image+painterResource.
+            Box(
+                modifier = Modifier
+                    .size(Dimens.avatarSize)
+                    .background(avatarColor, CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // Avatar: círculo colorido (cor do perfil do autor) com o ícone padrão
-                // de pessoa dentro, mesmo jeito que o professor usa Image+painterResource.
-                Box(
-                    modifier = Modifier
-                        .size(Dimens.avatarSize)
-                        .background(avatarColor, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_profile_placeholder),
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier.size(Dimens.avatarSize - Dimens.spaceSmall)
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(name, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "@$username · $datePost",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Username
-                    )
-                }
-
-                // Menu de três pontinhos: só aparece pra quem é dono do post, e esconde
-                // Editar/Excluir atrás de um clique, em vez de deixar os botões soltos.
-                if (isOwner) {
-                    IconButton(onClick = { menuAberto = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Mais opções",
-                            tint = Username
-                        )
-                    }
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier.size(Dimens.avatarSize - Dimens.spaceSmall)
+                )
             }
 
-            // Conteudo do Post
-            Text(contentPost, style = MaterialTheme.typography.titleMedium)
-
+            // Nome em destaque, username e data logo depois, mas em texto mais fino
+            // (bodyMedium, sem negrito) e na cor secundária, pra não competir com o nome.
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceLarge)
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
             ) {
+                Text(name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "@$username · $datePost",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Username
+                )
+            }
 
-                // Botão de Comentário: leva pro detalhe do post, onde dá pra comentar.
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
-                    modifier = Modifier.clickable(onClick = onCommentClick)
-                ) {
+            // Menu de três pontinhos: só aparece pra quem é dono do post, e esconde
+            // Editar/Excluir atrás de um clique, em vez de deixar os botões soltos.
+            if (isOwner) {
+                IconButton(onClick = { menuAberto = true }) {
                     Icon(
-                        imageVector = Icons.Default.ChatBubbleOutline,
-                        contentDescription = "Comentário",
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Mais opções",
                         tint = Username
-                    )
-                    Text(amountComments.toString(), style = MaterialTheme.typography.titleMedium, color = Username)
-                }
-
-                // Botão de Curtir: alterna entre curtido/não curtido a cada clique.
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
-                    modifier = Modifier.clickable(onClick = onLikeClick)
-                ) {
-                    Icon(
-                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Curtir",
-                        tint = if (isLiked) LikeColor else Username
-                    )
-                    Text(
-                        amountLikes.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (isLiked) LikeColor else Username
                     )
                 }
             }
         }
+
+        // Conteudo do Post
+        Text(contentPost, style = MaterialTheme.typography.titleMedium)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.spaceLarge)
+        ) {
+
+            // Botão de Comentário: leva pro detalhe do post, onde dá pra comentar.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
+                modifier = Modifier.clickable(onClick = onCommentClick)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChatBubbleOutline,
+                    contentDescription = "Comentário",
+                    tint = Username
+                )
+                Text(amountComments.toString(), style = MaterialTheme.typography.bodyMedium, color = Username)
+            }
+
+            // Botão de Curtir: alterna entre curtido/não curtido a cada clique.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
+                modifier = Modifier.clickable(onClick = onLikeClick)
+            ) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Curtir",
+                    tint = if (isLiked) LikeColor else Username
+                )
+                Text(
+                    amountLikes.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isLiked) LikeColor else Username
+                )
+            }
+        }
     }
+
+    // Linha divisória fina entre um post e outro, no lugar da borda/card antigos.
+    HorizontalDivider(color = DarkBorder)
 
     // Menu de ações do post (Editar/Excluir), aberto pelo ícone de três pontinhos.
     if (menuAberto) {

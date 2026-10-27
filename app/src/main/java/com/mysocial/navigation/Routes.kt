@@ -27,5 +27,8 @@ data class Profile(val userId: Long)
 data class Follows(val userId: Long, val type: TypeListFollows)
 
 @Serializable
+object Users
+
+@Serializable
 enum class TypeListFollows { FOLLOW, FOLLOWERS }
 // Seguindo / Seguidores

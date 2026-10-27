@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,6 +19,7 @@ import com.mysocial.navigation.Feed
 import com.mysocial.navigation.LoginUser
 import com.mysocial.navigation.Profile
 import com.mysocial.navigation.RegisterPost
+import com.mysocial.navigation.Users
 import com.mysocial.ui.theme.PrimaryColor
 
 // Barra de navegação do topo do app, visível em todas as telas depois do login.
@@ -44,6 +46,11 @@ fun TopNavBar(navController: NavHostController) {
             // Ícone de casinha: volta pro feed de posts.
             IconButton(onClick = { navController.navigate(Feed) }) {
                 Icon(imageVector = Icons.Default.Home, contentDescription = "Feed")
+            }
+
+            // Ícone de lupa: abre a busca de usuários, pra achar alguém e seguir.
+            IconButton(onClick = { navController.navigate(Users) }) {
+                Icon(imageVector = Icons.Default.Search, contentDescription = "Pesquisar usuários")
             }
 
             // Ícone de usuário: vai pro perfil de quem está logado.
