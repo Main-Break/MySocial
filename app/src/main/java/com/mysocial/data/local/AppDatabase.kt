@@ -13,7 +13,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     // já que ele guarda senha (mesmo em hash) e dado de usuário.
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    2 // versão do schema, usada pelo onUpgrade logo abaixo
+    3 // versão do schema, usada pelo onUpgrade logo abaixo
 ) {
     // Roda só uma vez, na primeira vez que o app abre e o banco ainda não existe.
     // Aqui fica o schema completo e atual do banco (sempre consolidado, nunca espalhado
@@ -21,13 +21,16 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     override fun onCreate(db: SQLiteDatabase) {
         // Tabela de usuários cadastrados. A senha nunca é salva em texto puro: "password"
         // guarda o hash (gerado pelo AuthManager) e "salt" o valor aleatório usado nesse hash.
+        // "cover_color" é a cor de fundo da capa do perfil (estilo X), escolhida uma vez
+        // no cadastro a partir de uma paleta fixa e guardada em hexadecimal (ex: "#1D9BF0").
         db.execSQL("""
             CREATE TABLE users(
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE CHECK(length(username) BETWEEN 3 AND 30),
             email TEXT NOT NULL UNIQUE CHECK(length(email) BETWEEN 3 AND 254),
             password BLOB NOT NULL,
-            salt BLOB NOT NULL
+            salt BLOB NOT NULL,
+            cover_color TEXT NOT NULL DEFAULT '#1D9BF0'
             )
         """.trimIndent())
 
@@ -51,6 +54,26 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             PRIMARY KEY (follower_id, followed_id)
             )
         """.trimIndent())
+
+        // Tabela de curtidas. Chave primária composta impede curtir o mesmo post duas vezes.
+        db.execSQL("""
+            CREATE TABLE likes(
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            PRIMARY KEY (user_id, post_id)
+            )
+        """.trimIndent())
+
+        // Tabela de comentários de um post. Mesmo limite de tamanho dos posts (280).
+        db.execSQL("""
+            CREATE TABLE comments(
+            id INTEGER PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            content TEXT NOT NULL CHECK(length(content) BETWEEN 1 AND 280),
+            created_at TEXT NOT NULL
+            )
+        """.trimIndent())
     }
 
     // Roda sozinho, automaticamente, sempre que o app abre e percebe que a versão do banco
@@ -69,6 +92,28 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
                 follower_id INTEGER NOT NULL REFERENCES users(id),
                 followed_id INTEGER NOT NULL REFERENCES users(id),
                 PRIMARY KEY (follower_id, followed_id)
+                )
+            """.trimIndent())
+        }
+
+        // Quem já tinha o banco antes da versão 3 ganha a coluna de cor de capa, a tabela
+        // de curtidas e a de comentários, sem perder nenhum dado que já existia.
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE users ADD COLUMN cover_color TEXT NOT NULL DEFAULT '#1D9BF0'")
+            db.execSQL("""
+                CREATE TABLE likes(
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                post_id INTEGER NOT NULL REFERENCES posts(id),
+                PRIMARY KEY (user_id, post_id)
+                )
+            """.trimIndent())
+            db.execSQL("""
+                CREATE TABLE comments(
+                id INTEGER PRIMARY KEY,
+                post_id INTEGER NOT NULL REFERENCES posts(id),
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                content TEXT NOT NULL CHECK(length(content) BETWEEN 1 AND 280),
+                created_at TEXT NOT NULL
                 )
             """.trimIndent())
         }

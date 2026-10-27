@@ -68,7 +68,7 @@ internal class FollowDAO(context: Context) {
     fun listFollowers(userId: Long): List<User> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT users.id, users.username, users.email
+            SELECT users.id, users.username, users.email, users.cover_color
             FROM follows
             JOIN users ON users.id = follows.follower_id
             WHERE follows.followed_id = ?
@@ -78,7 +78,7 @@ internal class FollowDAO(context: Context) {
         ).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
-                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2)))
+                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
                 }
             }
         }
@@ -88,7 +88,7 @@ internal class FollowDAO(context: Context) {
     fun listFollowing(userId: Long): List<User> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT users.id, users.username, users.email
+            SELECT users.id, users.username, users.email, users.cover_color
             FROM follows
             JOIN users ON users.id = follows.followed_id
             WHERE follows.follower_id = ?
@@ -98,7 +98,7 @@ internal class FollowDAO(context: Context) {
         ).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
-                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2)))
+                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
                 }
             }
         }

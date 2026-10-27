@@ -8,8 +8,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mysocial.auth.UserSession
 import com.mysocial.data.Post
+import com.mysocial.data.PostStats
 import com.mysocial.data.User
+import com.mysocial.data.dal.CommentDAO
 import com.mysocial.data.dal.FollowDAO
+import com.mysocial.data.dal.LikeDAO
 import com.mysocial.data.dal.PostDAO
 import com.mysocial.data.dal.UserDAO
 import kotlinx.coroutines.CancellationException
@@ -24,18 +27,25 @@ private data class ProfileData(
     val posts: List<Post>,
     val followersCount: Int,
     val followingCount: Int,
-    val isFollowing: Boolean
+    val isFollowing: Boolean,
+    val stats: Map<Long, PostStats>
 )
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val userDao = UserDAO(application)
     private val postDao = PostDAO(application)
     private val followDao = FollowDAO(application)
+    private val likeDao = LikeDAO(application)
+    private val commentDao = CommentDAO(application)
 
     var user by mutableStateOf<User?>(null)
         private set
 
     var posts by mutableStateOf<List<Post>>(emptyList())
+        private set
+
+    // Curtidas/comentários de cada post do perfil (chave = id do post).
+    var stats by mutableStateOf<Map<Long, PostStats>>(emptyMap())
         private set
 
     var followersCount by mutableStateOf(0)
@@ -81,13 +91,22 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun load(profileUserId: Long) = run {
         val result = withContext(Dispatchers.IO) {
             val currentUserId = UserSession.userId
+            val loadedPosts = postDao.listByUser(profileUserId)
+            val loadedStats = loadedPosts.associate { post ->
+                post.id to PostStats(
+                    likes = likeDao.countLikes(post.id),
+                    comments = commentDao.countByPost(post.id),
+                    likedByMe = currentUserId != null && likeDao.isLiked(currentUserId, post.id)
+                )
+            }
             ProfileData(
                 user = userDao.findById(profileUserId),
-                posts = postDao.listByUser(profileUserId),
+                posts = loadedPosts,
                 followersCount = followDao.countFollowers(profileUserId),
                 followingCount = followDao.countFollowing(profileUserId),
                 isFollowing = currentUserId != null && currentUserId != profileUserId &&
-                        followDao.isFollowing(currentUserId, profileUserId)
+                        followDao.isFollowing(currentUserId, profileUserId),
+                stats = loadedStats
             )
         }
         requireNotNull(result.user) { "Usuário não encontrado" }
@@ -96,6 +115,21 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         followersCount = result.followersCount
         followingCount = result.followingCount
         isFollowing = result.isFollowing
+        stats = result.stats
+    }
+
+    // Curte ou descurte um post do perfil, mesma lógica do PostViewModel.toggleLike.
+    fun toggleLike(postId: Long) = run {
+        val userId = UserSession.requireUser()
+        val current = stats[postId] ?: PostStats()
+        withContext(Dispatchers.IO) {
+            if (current.likedByMe) likeDao.unlike(userId, postId) else likeDao.like(userId, postId)
+        }
+        val updated = current.copy(
+            likes = if (current.likedByMe) (current.likes - 1).coerceAtLeast(0) else current.likes + 1,
+            likedByMe = !current.likedByMe
+        )
+        stats = stats + (postId to updated)
     }
 
     // Passa a seguir o dono do perfil e já atualiza o contador na tela.

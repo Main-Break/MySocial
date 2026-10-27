@@ -71,8 +71,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         RegisterValidator.validate(trimmedUsername, trimmedEmail, trimmedPassword)
         val salt = AuthManager.createSalt()
         val passwordHash = AuthManager.generateHash(password, salt)
+        val coverColor = AuthManager.pickCoverColor(trimmedUsername)
         try {
-            dao.register(trimmedUsername, trimmedEmail, passwordHash, salt)
+            dao.register(trimmedUsername, trimmedEmail, passwordHash, salt, coverColor)
             true
         } finally {
             // Limpa o hash da memória depois de gravar, não precisa mais dele aqui.

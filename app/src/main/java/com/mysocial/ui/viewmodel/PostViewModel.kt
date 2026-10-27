@@ -8,6 +8,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mysocial.auth.UserSession
 import com.mysocial.data.Post
+import com.mysocial.data.PostStats
+import com.mysocial.data.dal.CommentDAO
+import com.mysocial.data.dal.LikeDAO
 import com.mysocial.data.dal.PostDAO
 import com.mysocial.validation.PostValidator
 import kotlinx.coroutines.CancellationException
@@ -20,9 +23,16 @@ import kotlinx.coroutines.withContext
 // message, published) pra saber o que mostrar.
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = PostDAO(application)
+    private val likeDao = LikeDAO(application)
+    private val commentDao = CommentDAO(application)
 
     // Lista de posts carregada do banco, pronta pra desenhar o feed.
     var posts by mutableStateOf<List<Post>>(emptyList())
+        private set
+
+    // Curtidas/comentários de cada post (chave = id do post), carregado junto com a
+    // lista. Fica fora da classe Post porque mora em tabelas separadas (likes/comments).
+    var stats by mutableStateOf<Map<Long, PostStats>>(emptyMap())
         private set
 
     var message by mutableStateOf<String?>(null)
@@ -70,10 +80,39 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Busca todos os posts no banco (mais recente primeiro) pra exibir no feed.
+    // Busca todos os posts no banco (mais recente primeiro) pra exibir no feed, e já
+    // carrega junto a contagem de curtidas/comentários de cada um.
     fun list() = run {
-        val result = withContext(Dispatchers.IO) { dao.list() }
-        posts = result
+        val userId = UserSession.userId
+        val result = withContext(Dispatchers.IO) {
+            val loadedPosts = dao.list()
+            val loadedStats = loadedPosts.associate { it.id to statsFor(it.id, userId) }
+            loadedPosts to loadedStats
+        }
+        posts = result.first
+        stats = result.second
+    }
+
+    // Monta o PostStats de um post (chamado sempre dentro de Dispatchers.IO).
+    private fun statsFor(postId: Long, userId: Long?): PostStats = PostStats(
+        likes = likeDao.countLikes(postId),
+        comments = commentDao.countByPost(postId),
+        likedByMe = userId != null && likeDao.isLiked(userId, postId)
+    )
+
+    // Curte ou descurte um post (alterna de acordo com o estado atual) e já atualiza o
+    // contador na tela, sem precisar recarregar a lista inteira do banco.
+    fun toggleLike(postId: Long) = run {
+        val userId = UserSession.requireUser()
+        val current = stats[postId] ?: PostStats()
+        withContext(Dispatchers.IO) {
+            if (current.likedByMe) likeDao.unlike(userId, postId) else likeDao.like(userId, postId)
+        }
+        val updated = current.copy(
+            likes = if (current.likedByMe) (current.likes - 1).coerceAtLeast(0) else current.likes + 1,
+            likedByMe = !current.likedByMe
+        )
+        stats = stats + (postId to updated)
     }
 
     // Cria um post novo pro usuário logado. Exige estar logado (UserSession.requireUser)
@@ -90,11 +129,17 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         published = false
     }
 
-    // Busca um post qualquer pra mostrar na tela de detalhe.
+    // Busca um post qualquer pra mostrar na tela de detalhe, junto com as curtidas dele.
     fun loadForView(id: Long) = run {
-        val post = withContext(Dispatchers.IO) { dao.findById(id) }
-        requireNotNull(post) { "Post não encontrado" }
-        viewingPost = post
+        val userId = UserSession.userId
+        val result = withContext(Dispatchers.IO) {
+            val post = dao.findById(id)
+            val postStats = if (post != null) statsFor(id, userId) else null
+            post to postStats
+        }
+        requireNotNull(result.first) { "Post não encontrado" }
+        viewingPost = result.first
+        if (result.second != null) stats = stats + (id to result.second!!)
     }
 
     // Busca um post do usuário logado pra preencher a tela de edição.

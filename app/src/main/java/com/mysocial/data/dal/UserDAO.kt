@@ -16,14 +16,17 @@ internal class UserDAO(context: Context) {
     private val appContext = context.applicationContext
 
     // Cria um usuário novo. A senha que chega aqui já deve vir como hash (NUNCA texto puro),
-    // é responsabilidade de quem chama (o AuthViewModel) gerar esse hash antes.
-    fun register(username: String, email: String, password: ByteArray, salt: ByteArray) {
+    // é responsabilidade de quem chama (o AuthViewModel) gerar esse hash antes. "coverColor"
+    // é escolhido uma única vez aqui no cadastro (ver AuthManager.pickCoverColor) e fica
+    // fixo pro usuário a partir daí.
+    fun register(username: String, email: String, password: ByteArray, salt: ByteArray, coverColor: String) {
         AppDatabase(appContext).use { db ->
             val values = ContentValues().apply {
                 put("username", username)
                 put("email", email)
                 put("password", password)
                 put("salt", salt)
+                put("cover_color", coverColor)
             }
             db.writableDatabase.insertOrThrow("users", null, values)
         }
@@ -51,13 +54,13 @@ internal class UserDAO(context: Context) {
     // Lista todos os usuários cadastrados, ordenado por nome de usuário.
     fun list(): List<User> = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
-            "users", arrayOf("id", "username", "email"),
+            "users", arrayOf("id", "username", "email", "cover_color"),
             null, null, null, null,
             "username COLLATE NOCASE, id"
         ).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
-                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2)))
+                    add(User(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
                 }
             }
         }
@@ -66,14 +69,15 @@ internal class UserDAO(context: Context) {
     // Busca um usuário específico pelo id.
     fun findById(id: Long): User? = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
-            "users", arrayOf("id", "username", "email"),
+            "users", arrayOf("id", "username", "email", "cover_color"),
             "id = ?", arrayOf(id.toString()),
             null, null, null
         ).use { cursor ->
             if (cursor.moveToFirst()) User(
                 cursor.getLong(0),
                 cursor.getString(1),
-                cursor.getString(2)
+                cursor.getString(2),
+                cursor.getString(3)
             )
             else null
         }

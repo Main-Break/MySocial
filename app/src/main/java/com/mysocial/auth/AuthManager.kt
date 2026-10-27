@@ -29,6 +29,19 @@ object AuthManager {
         }
     }
 
+    // Paleta de cores de capa do perfil (mesma ideia visual do X: cada perfil tem uma cor
+    // de fundo no topo). Escolhida uma vez no cadastro, sempre a mesma pro mesmo username
+    // (não é aleatória de verdade, é baseada no hash do nome, pra não precisar perguntar
+    // nada a mais na tela de cadastro).
+    private val coverColorPalette = listOf(
+        "#1D9BF0", "#7856FF", "#00BA7C", "#F91880", "#FFAD1F", "#F4212E"
+    )
+
+    fun pickCoverColor(username: String): String {
+        val index = (username.hashCode().mod(coverColorPalette.size))
+        return coverColorPalette[index]
+    }
+
     // Confere se a senha digitada no login gera o mesmo hash que está salvo no banco.
     // Usa MessageDigest.isEqual (em vez de comparar byte a byte na mão) porque essa função
     // evita vazar, pelo tempo de execução, quantos bytes já bateram, dificultando ataques.
