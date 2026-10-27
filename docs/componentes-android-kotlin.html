@@ -117,7 +117,9 @@
         <li><a href="#dispatchers">Dispatchers.IO e withContext</a></li>
         <li><a href="#navhost">NavHost, NavController e rotas @Serializable</a></li>
         <li><a href="#scaffold">Scaffold e TopAppBar</a></li>
-        <li><a href="#alertdialog">AlertDialog</a></li>
+        <li><a href="#alertdialog">AlertDialog (e como virou um menu de ações)</a></li>
+        <li><a href="#tabrow">PrimaryTabRow e Tab</a></li>
+        <li><a href="#image">Image e painterResource</a></li>
         <li><a href="#sqliteopenhelper">SQLiteOpenHelper</a></li>
         <li><a href="#contentvalues">ContentValues e Cursor</a></li>
     </ol>
@@ -273,9 +275,9 @@ composable&lt;DetailPost&gt; { backStackEntry ->
 </div>
 
 <div class="item" id="alertdialog-item">
-<h3>AlertDialog</h3>
+<h3>AlertDialog (e como virou um menu de ações)</h3>
 <div class="subtitulo">androidx.compose.material3</div>
-<p>Uma janela de confirmação que flutua por cima do resto da tela. Usada sempre que uma ação é irreversível, como excluir um post: em vez de excluir no primeiro clique, o botão "Excluir" só marca qual item deveria ser excluído, e o <code>AlertDialog</code> pede confirmação antes de chamar o ViewModel de verdade.</p>
+<p>Uma janela que flutua por cima do resto da tela. O uso mais comum é pra confirmar uma ação irreversível, como excluir um post: em vez de excluir no primeiro clique, o botão "Excluir" só marca qual item deveria ser excluído, e o <code>AlertDialog</code> pede confirmação antes de chamar o ViewModel de verdade.</p>
 <pre>AlertDialog(
     onDismissRequest = { deleteId = null },
     title = { Text("Excluir post?") },
@@ -289,6 +291,40 @@ composable&lt;DetailPost&gt; { backStackEntry ->
         TextButton(onClick = { deleteId = null }) { Text("Cancelar") }
     }
 )</pre>
+<p>No <code>CardPost</code> e no <code>DetailPostScreen</code>, o mesmo componente é reaproveitado de um jeito diferente: em vez de "confirmar ou cancelar", o <code>text</code> do diálogo vira uma lista de botões ("Editar", "Excluir"), funcionando como um pequeno menu de ações. Ele só abre quando a pessoa clica no ícone de três pontinhos (<code>Icons.Default.MoreVert</code>) no cabeçalho do post, e só aparece pra quem é dono dele. É o mesmo componente do professor, só usado de um jeito a mais, pra esconder as opções de editar/excluir em vez de deixá-las sempre visíveis (igual ao "⋮" do X).</p>
+</div>
+
+<div class="item" id="tabrow-item">
+<h3>PrimaryTabRow e Tab</h3>
+<div class="subtitulo">androidx.compose.material3 (não é do material do professor, mas é só um menu de abas)</div>
+<p>É o menu de abas que troca o conteúdo da tela sem precisar navegar pra outra rota. Usado na tela de Seguidores/Seguindo: um <code>PrimaryTabRow</code> com dois <code>Tab</code> ("Seguidores" e "Seguindo"), e a aba marcada como <code>selected = true</code> decide qual lista é carregada.</p>
+<pre>var abaSelecionada by remember(userId) { mutableStateOf(type) }
+
+PrimaryTabRow(selectedTabIndex = if (abaSelecionada == FOLLOWERS) 0 else 1) {
+    Tab(
+        selected = abaSelecionada == FOLLOWERS,
+        onClick = { abaSelecionada = FOLLOWERS },
+        text = { Text("Seguidores") }
+    )
+    Tab(
+        selected = abaSelecionada == FOLLOW,
+        onClick = { abaSelecionada = FOLLOW },
+        text = { Text("Seguindo") }
+    )
+}</pre>
+<p>Trocar de aba só muda o valor de <code>abaSelecionada</code> (um estado comum, com <code>remember</code>), e um <code>LaunchedEffect(userId, abaSelecionada)</code> recarrega a lista certa sempre que esse valor muda, sem precisar voltar pra tela de perfil e clicar de novo.</p>
+</div>
+
+<div class="item" id="image-item">
+<h3>Image e painterResource</h3>
+<div class="subtitulo">androidx.compose.foundation / androidx.compose.ui.res (mesmo jeito que o professor usa imagem)</div>
+<p>É como o Compose desenha uma imagem vinda de um recurso do projeto (pasta <code>res/drawable/</code>). <code>painterResource(id = R.drawable.algumacoisa)</code> carrega o arquivo, e <code>Image(painter = ..., contentDescription = ...)</code> desenha ele na tela. É exatamente o padrão que o professor usa no material dele.</p>
+<pre>Image(
+    painter = painterResource(id = R.drawable.ic_profile_placeholder),
+    contentDescription = "Foto de perfil",
+    modifier = Modifier.size(Dimens.avatarSize)
+)</pre>
+<p>O projeto usa um ícone de pessoa (<code>ic_profile_placeholder.xml</code>) como foto de perfil provisória, dentro de um círculo colorido (a cor de capa de cada usuário). É um <code>vector drawable</code>, ou seja, um desenho vetorial (o equivalente, dentro do Android, a um SVG), guardado localmente no projeto, sem depender de nenhum arquivo baixado de fora. No futuro, trocar esse ícone por uma foto de verdade enviada pelo usuário é só trocar o <code>painterResource</code> por um <code>painter</code> que carregue a foto, sem mudar o resto da tela.</p>
 </div>
 
 <h2 id="banco-comp">6. Banco de dados</h2>

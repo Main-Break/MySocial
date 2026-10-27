@@ -131,8 +131,11 @@
     <li>Criar, editar e excluir post (CRUD completo).</li>
     <li>Perfil de usuário com contagem de seguidores e seguindo.</li>
     <li>Seguir e deixar de seguir outro usuário.</li>
-    <li>Lista de seguidores e de quem o usuário segue.</li>
-    <li>Tela de detalhe de um post.</li>
+    <li>Lista de seguidores e de quem o usuário segue, com abas pra trocar entre as duas (igual ao X).</li>
+    <li>Tela de detalhe de um post, com curtida e comentários.</li>
+    <li>Curtir e descurtir post.</li>
+    <li>Comentar um post e excluir o próprio comentário.</li>
+    <li>Perfil com capa colorida (cor própria de cada usuário) e avatar.</li>
 </ul>
 
 <h2 id="pacotes">2. Separação dos pacotes (pastas)</h2>
@@ -142,7 +145,7 @@
 <p>Tudo relacionado a autenticação e sessão. <code>AuthManager</code> cuida de gerar e conferir o hash da senha. <code>UserSession</code> guarda em memória qual usuário está logado no momento.</p>
 
 <h3>data/</h3>
-<p>As "entidades" do app (<code>User</code>, <code>Post</code>), o acesso ao SQLite (<code>data/local/AppDatabase.kt</code>) e os DAOs (<code>data/dal/</code>), que são as únicas classes que executam SQL de verdade: <code>UserDAO</code>, <code>PostDAO</code> e <code>FollowDAO</code>.</p>
+<p>As "entidades" do app (<code>User</code>, <code>Post</code>, <code>Comment</code>, <code>PostStats</code>), o acesso ao SQLite (<code>data/local/AppDatabase.kt</code>) e os DAOs (<code>data/dal/</code>), que são as únicas classes que executam SQL de verdade: <code>UserDAO</code>, <code>PostDAO</code>, <code>FollowDAO</code>, <code>LikeDAO</code> e <code>CommentDAO</code>.</p>
 
 <h3>navigation/</h3>
 <p><code>Routes.kt</code> define cada tela do app como uma classe/objeto serializável. <code>AppNavigation.kt</code> monta o <code>NavHost</code> que liga cada rota à tela correspondente e decide pra onde navegar quando uma ação termina.</p>
@@ -154,7 +157,7 @@
 <p>Pedaços de interface reaproveitados em mais de uma tela, como o <code>CardPost</code> (card de um post) e o <code>TopNavBar</code> (barra do topo).</p>
 
 <h3>ui/viewmodel/</h3>
-<p>A "ponte" entre a tela e o banco de dados: <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code>, <code>FollowsViewModel</code>. Nenhuma tela acessa um DAO diretamente, sempre passa por um ViewModel.</p>
+<p>A "ponte" entre a tela e o banco de dados: <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code>, <code>FollowsViewModel</code>, <code>CommentViewModel</code>. Nenhuma tela acessa um DAO diretamente, sempre passa por um ViewModel.</p>
 
 <h3>ui/theme/</h3>
 <p>Cores, espaçamentos (<code>Dimens</code>) e tipografia do app. Centralizado aqui pra não espalhar número/cor mágica pelo código das telas.</p>
@@ -186,14 +189,19 @@
 <div class="caixa">Esse mesmo padrão (tela chama função, ViewModel valida e grava, estado muda, tela reage) se repete em todas as outras operações: login, cadastro, editar post, seguir alguém, etc.</div>
 
 <h2 id="banco">5. Banco de dados e migração automática</h2>
-<p>O banco é SQLite puro, sem Room nem nenhum ORM, acessado via <code>SQLiteOpenHelper</code> (classe <code>AppDatabase</code>). Três tabelas: <code>users</code>, <code>posts</code> e <code>follows</code>.</p>
-<p>O schema inteiro e atualizado vive dentro do método <code>onCreate</code>, num lugar só (nunca espalhado em vários arquivos "update_1.sql", "update_2.sql" etc.). Quando uma tabela nova é adicionada depois (como aconteceu com <code>follows</code>), o número da versão do banco sobe, e o método <code>onUpgrade</code> aplica a diferença sozinho, na hora que o app abre, sem precisar de nenhum passo manual.</p>
+<p>O banco é SQLite puro, sem Room nem nenhum ORM, acessado via <code>SQLiteOpenHelper</code> (classe <code>AppDatabase</code>). Cinco tabelas: <code>users</code> (com a coluna <code>cover_color</code>, a cor de capa do perfil), <code>posts</code>, <code>follows</code>, <code>likes</code> e <code>comments</code>.</p>
+<p>O schema inteiro e atualizado vive dentro do método <code>onCreate</code>, num lugar só (nunca espalhado em vários arquivos "update_1.sql", "update_2.sql" etc.). Quando uma tabela ou coluna nova é adicionada depois (como aconteceu com <code>follows</code> na versão 2, e com <code>cover_color</code>/<code>likes</code>/<code>comments</code> na versão 3), o número da versão do banco sobe, e o método <code>onUpgrade</code> aplica a diferença sozinho, na hora que o app abre, sem precisar de nenhum passo manual.</p>
 <pre>override fun onUpgrade(db, oldVersion, newVersion) {
     if (oldVersion &lt; 2) {
         db.execSQL("CREATE TABLE follows(...)")
     }
+    if (oldVersion &lt; 3) {
+        db.execSQL("ALTER TABLE users ADD COLUMN cover_color ...")
+        db.execSQL("CREATE TABLE likes(...)")
+        db.execSQL("CREATE TABLE comments(...)")
+    }
 }</pre>
-<p>Isso evita o problema clássico de "esqueceram de rodar a migração em produção": quem já tinha o app instalado numa versão antiga recebe a tabela nova automaticamente, sem perder os dados que já existiam.</p>
+<p>Isso evita o problema clássico de "esqueceram de rodar a migração em produção": quem já tinha o app instalado numa versão antiga recebe a tabela/coluna nova automaticamente, sem perder os dados que já existiam.</p>
 
 <h2 id="seguranca">6. Decisões de segurança</h2>
 <ul>
