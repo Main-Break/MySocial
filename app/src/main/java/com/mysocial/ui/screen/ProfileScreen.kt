@@ -140,8 +140,11 @@ fun ProfileScreen(
                         if (UserSession.userId == userId) {
                             OutlinedButton(
                                 onClick = onNavigateToEditProfile,
-                                shape = MaterialTheme.shapes.large
-                            ) { Text("Editar perfil") }
+                                shape = MaterialTheme.shapes.large,
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
+                            ) {
+                                Text("Editar perfil")
+                            }
                         } else if (UserSession.userId != null) {
                             if (profileViewModel.isFollowing) {
                                 OutlinedButton(
