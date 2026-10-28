@@ -2,9 +2,6 @@ package com.mysocial.validation
 
 import android.util.Patterns
 
-// Concentra as regras de "o que é um cadastro válido" num lugar só, em vez de espalhar
-// esses "if" dentro da tela ou do ViewModel. Se algum campo for inválido, lança uma
-// IllegalArgumentException com uma mensagem pronta pra mostrar pro usuário.
 object RegisterValidator {
     fun validate(username: String, email: String, password: String) {
         validateUsername(username)

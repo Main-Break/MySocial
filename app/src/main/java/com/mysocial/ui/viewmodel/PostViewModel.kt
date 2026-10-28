@@ -8,6 +8,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mysocial.auth.UserSession
 import com.mysocial.data.Post
+import com.mysocial.data.PostStats
+import com.mysocial.data.dal.CommentDAO
+import com.mysocial.data.dal.LikeDAO
 import com.mysocial.data.dal.PostDAO
 import com.mysocial.validation.PostValidator
 import kotlinx.coroutines.CancellationException
@@ -15,14 +18,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// Ponte entre as telas de feed/novo post e o banco de dados, no mesmo padrão do
-// AuthViewModel: a tela só chama list()/create() e lê os estados (posts, loading,
-// message, published) pra saber o que mostrar.
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = PostDAO(application)
+    private val likeDao = LikeDAO(application)
+    private val commentDao = CommentDAO(application)
 
-    // Lista de posts carregada do banco, pronta pra desenhar o feed.
     var posts by mutableStateOf<List<Post>>(emptyList())
+        private set
+
+    var stats by mutableStateOf<Map<Long, PostStats>>(emptyMap())
         private set
 
     var message by mutableStateOf<String?>(null)
@@ -31,13 +35,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     var loading by mutableStateOf(false)
         private set
 
-    // Vira true assim que um post novo é publicado com sucesso. A tela de novo post
-    // observa isso pra voltar pro feed, e depois chama consumePublished() pra resetar.
     var published by mutableStateOf(false)
         private set
 
-    // Mesma ideia do "run" do AuthViewModel: evita clique duplo e transforma erro
-    // numa mensagem amigável.
+    var editTarget by mutableStateOf<Post?>(null)
+        private set
+
+    var viewingPost by mutableStateOf<Post?>(null)
+        private set
+
     private fun run(operation: suspend () -> Unit) {
         if (loading) return
         loading = true
@@ -49,7 +55,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             } catch (error: CancellationException) {
                 throw error
             } catch (error: IllegalArgumentException) {
-                // Erro vindo do PostValidator/require (ex: post vazio ou grande demais).
                 message = error.message
             } catch (error: Exception) {
                 message = "Ocorreu um erro inesperado!"
@@ -59,14 +64,36 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Busca todos os posts no banco (mais recente primeiro) pra exibir no feed.
     fun list() = run {
-        val result = withContext(Dispatchers.IO) { dao.list() }
-        posts = result
+        val userId = UserSession.userId
+        val result = withContext(Dispatchers.IO) {
+            val loadedPosts = dao.list()
+            val loadedStats = loadedPosts.associate { it.id to statsFor(it.id, userId) }
+            loadedPosts to loadedStats
+        }
+        posts = result.first
+        stats = result.second
     }
 
-    // Cria um post novo pro usuário logado. Exige estar logado (UserSession.requireUser)
-    // e valida o tamanho do texto antes de gravar no banco.
+    private fun statsFor(postId: Long, userId: Long?): PostStats = PostStats(
+        likes = likeDao.countLikes(postId),
+        comments = commentDao.countByPost(postId),
+        likedByMe = userId != null && likeDao.isLiked(userId, postId)
+    )
+
+    fun toggleLike(postId: Long) = run {
+        val userId = UserSession.requireUser()
+        val current = stats[postId] ?: PostStats()
+        withContext(Dispatchers.IO) {
+            if (current.likedByMe) likeDao.unlike(userId, postId) else likeDao.like(userId, postId)
+        }
+        val updated = current.copy(
+            likes = if (current.likedByMe) (current.likes - 1).coerceAtLeast(0) else current.likes + 1,
+            likedByMe = !current.likedByMe
+        )
+        stats = stats + (postId to updated)
+    }
+
     fun create(content: String) = run {
         val userId = UserSession.requireUser()
         val trimmedContent = content.trim()
@@ -77,5 +104,39 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun consumePublished() {
         published = false
+    }
+
+    fun loadForView(id: Long) = run {
+        val userId = UserSession.userId
+        val result = withContext(Dispatchers.IO) {
+            val post = dao.findById(id)
+            val postStats = if (post != null) statsFor(id, userId) else null
+            post to postStats
+        }
+        requireNotNull(result.first) { "Post não encontrado" }
+        viewingPost = result.first
+        if (result.second != null) stats = stats + (id to result.second!!)
+    }
+
+    fun loadForEdit(id: Long) = run {
+        val userId = UserSession.requireUser()
+        val post = withContext(Dispatchers.IO) { dao.findById(id, userId) }
+        requireNotNull(post) { "Post não encontrado" }
+        editTarget = post
+    }
+
+    fun update(id: Long, content: String) = run {
+        val userId = UserSession.requireUser()
+        val trimmedContent = content.trim()
+        PostValidator.validate(trimmedContent)
+        withContext(Dispatchers.IO) { dao.update(id, userId, trimmedContent) }
+        published = true
+    }
+
+    fun delete(id: Long) = run {
+        val userId = UserSession.requireUser()
+        withContext(Dispatchers.IO) { dao.delete(id, userId) }
+        posts = posts.filterNot { it.id == id }
+        published = true
     }
 }

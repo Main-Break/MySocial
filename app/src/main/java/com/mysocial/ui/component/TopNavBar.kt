@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,11 +19,9 @@ import com.mysocial.navigation.Feed
 import com.mysocial.navigation.LoginUser
 import com.mysocial.navigation.Profile
 import com.mysocial.navigation.RegisterPost
+import com.mysocial.navigation.Users
 import com.mysocial.ui.theme.PrimaryColor
 
-// Barra de navegação do topo do app, visível em todas as telas depois do login.
-// Mesma ideia do Menu.kt do material do professor: um TopAppBar só, com botões de ação
-// pra trocar de tela, em vez de uma barra de navegação embaixo.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopNavBar(navController: NavHostController) {
@@ -31,8 +30,6 @@ fun TopNavBar(navController: NavHostController) {
             Text("MySocial", style = MaterialTheme.typography.titleMedium)
         },
         actions = {
-            // Botão de "+" (cor primária, igual ao botão de compor do Twitter): abre a
-            // tela de criar post.
             IconButton(onClick = { navController.navigate(RegisterPost) }) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -41,12 +38,14 @@ fun TopNavBar(navController: NavHostController) {
                 )
             }
 
-            // Ícone de casinha: volta pro feed de posts.
             IconButton(onClick = { navController.navigate(Feed) }) {
                 Icon(imageVector = Icons.Default.Home, contentDescription = "Feed")
             }
 
-            // Ícone de usuário: vai pro perfil de quem está logado.
+            IconButton(onClick = { navController.navigate(Users) }) {
+                Icon(imageVector = Icons.Default.Search, contentDescription = "Pesquisar usuários")
+            }
+
             IconButton(
                 onClick = {
                     val userId = UserSession.userId ?: return@IconButton
@@ -56,7 +55,6 @@ fun TopNavBar(navController: NavHostController) {
                 Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil")
             }
 
-            // Ícone de sair: encerra a sessão e volta pro login.
             IconButton(
                 onClick = {
                     UserSession.clear()

@@ -1,8 +1,5 @@
 package com.mysocial.ui.theme
 
-/*
-    Nesse arquivo ficam as dimensões básicas do projeto;
-*/
 import androidx.compose.ui.unit.dp
 
 object Dimens {
@@ -13,6 +10,9 @@ object Dimens {
 
     val avatarSize = 40.dp
     val iconSize = 18.dp
+
+    val coverHeight = 120.dp
+    val avatarSizeLarge = 84.dp
 
     val postHorizontalPadding = 16.dp
     val postVerticalPadding = 12.dp

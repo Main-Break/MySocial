@@ -8,14 +8,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mysocial.auth.UserSession
+import com.mysocial.data.PostStats
 import com.mysocial.ui.component.CardPost
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
@@ -25,26 +34,25 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// Tela onde será exibido os posts do programa
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
+    onNavigateToEditPost: (Long) -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
     postViewModel: PostViewModel = viewModel()
 ) {
-    // Busca os posts assim que a tela abre.
     LaunchedEffect(Unit) {
         postViewModel.list()
     }
+
+    var deleteId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
         if (postViewModel.loading) {
             item { CircularProgressIndicator() }
         }
 
-        // Placeholder pra quando não tem post nenhum pra mostrar (feed vazio porque o
-        // usuário ainda não postou nada nem segue ninguém que postou).
         if (!postViewModel.loading && postViewModel.posts.isEmpty()) {
             item {
                 Column(
@@ -63,29 +71,53 @@ fun FeedScreen(
             }
         }
 
-        // Fomatação de Data do Java/Kotlin
-
         items(postViewModel.posts, key = { it.id }) { post ->
 
-            // Formata data para exibição no Post.
             val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
             val date = LocalDateTime.parse(post.createdAt)
 
-            // amountComments/amountLikes ainda ficam fixos em 0: o banco ainda não tem
-            // tabela de curtidas/comentários, só de posts.
+            val stats = postViewModel.stats[post.id] ?: PostStats()
+
             CardPost(
                 username = post.author,
                 name = post.author,
                 contentPost = post.content,
                 datePost = date.format(formatter),
-                amountComments = 0,
-                amountLikes = 0
+                amountComments = stats.comments,
+                amountLikes = stats.likes,
+                avatarColor = Color(android.graphics.Color.parseColor(post.authorCoverColor)),
+                isLiked = stats.likedByMe,
+                onLikeClick = { postViewModel.toggleLike(post.id) },
+                onCommentClick = { onNavigateToDetail(post.id) },
+                isOwner = post.userId == UserSession.userId,
+                onEditClick = { onNavigateToEditPost(post.id) },
+                onDeleteClick = { deleteId = post.id },
+                onClick = { onNavigateToDetail(post.id) }
             )
         }
     }
+
+    val postParaExcluir = postViewModel.posts.firstOrNull { it.id == deleteId }
+    if (postParaExcluir != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text("Excluir post?") },
+            text = { Text("Essa ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleteId = null
+                        postViewModel.delete(postParaExcluir.id)
+                    }
+                ) { Text("Excluir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteId = null }) { Text("Cancelar") }
+            }
+        )
+    }
 }
 
-// Para vizualizar a tela
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
