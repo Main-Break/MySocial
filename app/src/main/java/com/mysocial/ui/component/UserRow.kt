@@ -23,10 +23,6 @@ import com.mysocial.R
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.Username
 
-// Uma linha de usuário (avatar + nome + username), clicável, terminando numa linha
-// divisória. Mesmo visual do CardPost (sem card/borda, só a linha embaixo), usado
-// tanto na busca de usuários (UsersScreen) quanto na lista de seguidores/seguindo
-// (FollowsScreen), pra manter os dois com a mesma cara.
 @Composable
 fun UserRow(
     username: String,

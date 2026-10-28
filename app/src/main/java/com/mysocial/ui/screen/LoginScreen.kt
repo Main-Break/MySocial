@@ -43,14 +43,10 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = { },
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // Aceita tanto e-mail quanto @username, ver AuthViewModel.login.
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    // Controla se a senha aparece em texto ou escondida (bolinhas), junto com o ícone de olho.
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Fica "escutando" o resultado do login. Quando o AuthViewModel marca done = true
-    // (login deu certo), navega pro feed e avisa o ViewModel que já reagiu a isso.
     LaunchedEffect(authViewModel.done) {
         if (authViewModel.done) {
             authViewModel.consumeResult()
@@ -70,7 +66,6 @@ fun LoginScreen(
             style = MaterialTheme.typography.titleLarge
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
         Text(
@@ -78,7 +73,6 @@ fun LoginScreen(
             style = MaterialTheme.typography.titleMedium
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
         OutlinedTextField(
@@ -91,7 +85,6 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
         OutlinedTextField(
@@ -104,7 +97,6 @@ fun LoginScreen(
             visualTransformation = if (passwordVisible)
                 VisualTransformation.None
             else PasswordVisualTransformation(),
-            // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
             trailingIcon = {
                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                 val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
@@ -115,21 +107,16 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Mensagem de erro do AuthViewModel (ex: "e-mail ou senha inválido"), só aparece
-        // quando existe um erro.
         authViewModel.message?.let {
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
             Text(it, color = MaterialTheme.colorScheme.error)
         }
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
         Button(
             onClick = {
-                // Dispara o login de verdade (acesso ao banco) no AuthViewModel.
                 authViewModel.login(identifier, password)
-                // Limpa o campo de senha da tela por segurança, já foi enviado.
                 password = ""
             },
             enabled = !authViewModel.loading && identifier.isNotEmpty() && password.isNotEmpty(),
@@ -140,10 +127,8 @@ fun LoginScreen(
             Text(if (authViewModel.loading) "Aguarde..." else "Entrar")
         }
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
-        // Seção onde o usuário não cadastrado pode criar a conta.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Não tem conta?")
 
@@ -154,7 +139,6 @@ fun LoginScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {

@@ -35,9 +35,6 @@ import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.theme.Username
 import com.mysocial.ui.viewmodel.ProfileViewModel
 
-// Tela de editar o próprio perfil: bio e endereço (CEP, rua, número, bairro, cidade,
-// estado). Username/e-mail/senha não são editados aqui (ficariam numa tela separada
-// de "conta", que não foi pedida ainda). O "X" no topo volta sem salvar nada.
 @Composable
 fun EditProfileScreen(
     modifier: Modifier = Modifier,
@@ -58,8 +55,6 @@ fun EditProfileScreen(
     var cidade by remember { mutableStateOf("") }
     var estado by remember { mutableStateOf("") }
 
-    // Assim que os dados do usuário chegam do banco, preenche os campos com o que
-    // já estava salvo (se a pessoa já tinha editado o perfil antes).
     LaunchedEffect(profileViewModel.user) {
         profileViewModel.user?.let {
             bio = it.bio
@@ -72,7 +67,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Quando salvar com sucesso, volta sozinho pro perfil.
     LaunchedEffect(profileViewModel.saved) {
         if (profileViewModel.saved) {
             profileViewModel.consumeSaved()
@@ -179,7 +173,6 @@ fun EditProfileScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun EditProfileScreenPreview() {

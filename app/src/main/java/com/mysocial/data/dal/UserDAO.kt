@@ -5,20 +5,11 @@ import android.content.Context
 import com.mysocial.data.User
 import com.mysocial.data.local.AppDatabase
 
-// Carrega só o que é necessário pra conferir a senha no login: o hash salvo, o salt usado
-// pra gerar esse hash, e o id do usuário dono dessa senha.
 internal class StoredPassword(val hash: ByteArray, val salt: ByteArray, val userId: Long)
 
-// DAO = Data Access Object. É a única classe que conversa diretamente com a tabela
-// "users" do banco. Toda query usa "?" no lugar do valor (nunca concatena texto do
-// usuário na query), o que evita SQL Injection.
 internal class UserDAO(context: Context) {
     private val appContext = context.applicationContext
 
-    // Cria um usuário novo. A senha que chega aqui já deve vir como hash (NUNCA texto puro),
-    // é responsabilidade de quem chama (o AuthViewModel) gerar esse hash antes. "coverColor"
-    // é escolhido uma única vez aqui no cadastro (ver AuthManager.pickCoverColor) e fica
-    // fixo pro usuário a partir daí.
     fun register(username: String, email: String, password: ByteArray, salt: ByteArray, coverColor: String) {
         AppDatabase(appContext).use { db ->
             val values = ContentValues().apply {
@@ -32,9 +23,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Busca o hash da senha e o salt de um usuário pelo e-mail OU pelo username (o login
-    // aceita os dois, igual ao X). "COLLATE NOCASE" no username deixa a busca sem
-    // diferenciar maiúscula/minúscula. Devolve null se não existir ninguém com esse dado.
     fun findPassword(identifier: String): StoredPassword? = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
             "users",
@@ -52,7 +40,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Colunas usadas pra montar um User completo (ver userFromCursor logo abaixo).
     private val userColumns = arrayOf(
         "id", "username", "email", "cover_color",
         "bio", "cep", "rua", "numero", "bairro", "cidade", "estado"
@@ -72,7 +59,6 @@ internal class UserDAO(context: Context) {
         estado = cursor.getString(10)
     )
 
-    // Lista todos os usuários cadastrados, ordenado por nome de usuário.
     fun list(): List<User> = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
             "users", userColumns,
@@ -85,7 +71,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Busca um usuário específico pelo id.
     fun findById(id: Long): User? = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
             "users", userColumns,
@@ -96,7 +81,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Atualiza o username e, se informado, a senha (hash + salt novos) de um usuário.
     fun update(id: Long, username: String, password: ByteArray? = null, salt: ByteArray? = null) {
         AppDatabase(appContext).use { db ->
             val values = ContentValues().apply {
@@ -111,9 +95,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Atualiza a bio e o endereço do perfil (dados "extras", separados do username/senha
-    // acima). Só o próprio usuário logado edita o próprio perfil, conferido pelo
-    // ProfileViewModel antes de chamar isso.
     fun updateProfile(
         id: Long,
         bio: String,
@@ -141,8 +122,6 @@ internal class UserDAO(context: Context) {
         }
     }
 
-    // Exclui um usuário. Nunca deixa o usuário logado excluir a própria conta por aqui,
-    // como forma simples de evitar o usuário ficar "órfão" no meio de uma sessão ativa.
     fun delete(id: Long, currentUserId: Long) {
         require(currentUserId > 0) { "Faça login para continuar" }
         require(id != currentUserId) { "Você não pode excluir o seu usuário" }

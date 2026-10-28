@@ -22,9 +22,6 @@ import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.viewmodel.UsersViewModel
 
-// Tela de busca/lista de usuários cadastrados. Dá pra encontrar qualquer pessoa pelo
-// username e abrir o perfil dela, pra então seguir e acompanhar os posts (o botão de
-// seguir já fica na própria tela de perfil, ver ProfileScreen).
 @Composable
 fun UsersScreen(
     modifier: Modifier = Modifier,
@@ -50,8 +47,6 @@ fun UsersScreen(
             CircularProgressIndicator(modifier = Modifier.padding(Dimens.spaceLarge))
         }
 
-        // Nunca mostra o próprio usuário logado na lista: não faz sentido seguir
-        // a si mesmo.
         val usuarios = usersViewModel.users.filter { it.id != UserSession.userId }
 
         if (!usersViewModel.loading && usuarios.isEmpty()) {
@@ -74,7 +69,6 @@ fun UsersScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun UsersScreenPreview() {

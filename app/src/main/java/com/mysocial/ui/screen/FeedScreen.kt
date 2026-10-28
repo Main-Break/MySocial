@@ -34,8 +34,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// Tela onde será exibido os posts do programa
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FeedScreen(
@@ -44,14 +42,10 @@ fun FeedScreen(
     onNavigateToDetail: (Long) -> Unit = {},
     postViewModel: PostViewModel = viewModel()
 ) {
-    // Busca os posts assim que a tela abre.
     LaunchedEffect(Unit) {
         postViewModel.list()
     }
 
-    // Guarda o id do post que o usuário pediu pra excluir, só pra mostrar o AlertDialog
-    // de confirmação (mesmo padrão do UsuarioScreen do professor). Null = nenhum post
-    // aguardando confirmação.
     var deleteId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
@@ -59,8 +53,6 @@ fun FeedScreen(
             item { CircularProgressIndicator() }
         }
 
-        // Placeholder pra quando não tem post nenhum pra mostrar (feed vazio porque o
-        // usuário ainda não postou nada nem segue ninguém que postou).
         if (!postViewModel.loading && postViewModel.posts.isEmpty()) {
             item {
                 Column(
@@ -79,11 +71,8 @@ fun FeedScreen(
             }
         }
 
-        // Fomatação de Data do Java/Kotlin
-
         items(postViewModel.posts, key = { it.id }) { post ->
 
-            // Formata data para exibição no Post.
             val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
             val date = LocalDateTime.parse(post.createdAt)
 
@@ -108,7 +97,6 @@ fun FeedScreen(
         }
     }
 
-    // Confirmação de exclusão: só aparece quando "deleteId" está preenchido.
     val postParaExcluir = postViewModel.posts.firstOrNull { it.id == deleteId }
     if (postParaExcluir != null) {
         AlertDialog(
@@ -130,7 +118,6 @@ fun FeedScreen(
     }
 }
 
-// Para vizualizar a tela
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable

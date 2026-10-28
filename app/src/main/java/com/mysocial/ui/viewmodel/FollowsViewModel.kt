@@ -14,8 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// Ponte entre a FollowsScreen e o banco: a tela só chama load() e lê "users" pra saber
-// o que mostrar. Mesmo padrão MVVM dos outros ViewModels do projeto.
 class FollowsViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = FollowDAO(application)
 
@@ -46,7 +44,6 @@ class FollowsViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Busca a lista certa (seguidores ou seguindo) de acordo com o "type" da rota.
     fun load(userId: Long, type: TypeListFollows) = run {
         val result = withContext(Dispatchers.IO) {
             when (type) {

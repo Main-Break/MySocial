@@ -47,8 +47,6 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Quando o cadastro dá certo, manda o usuário pra tela de Login pra ele entrar com a
-    // conta recém-criada (o cadastro, por si só, ainda não loga automaticamente).
     LaunchedEffect(authViewModel.done) {
         if (authViewModel.done) {
             authViewModel.consumeResult()
@@ -68,7 +66,6 @@ fun RegisterScreen(
             style = MaterialTheme.typography.titleLarge
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
         Text(
@@ -76,7 +73,6 @@ fun RegisterScreen(
             style = MaterialTheme.typography.titleMedium
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
         OutlinedTextField(
@@ -91,7 +87,6 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
         OutlinedTextField(
@@ -107,7 +102,6 @@ fun RegisterScreen(
         )
 
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceSmall))
 
         OutlinedTextField(
@@ -120,7 +114,6 @@ fun RegisterScreen(
             visualTransformation = if (passwordVisible)
                 VisualTransformation.None
             else PasswordVisualTransformation(),
-            // Ícone de olho clicável que alterna entre mostrar/esconder a senha digitada.
             trailingIcon = {
                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                 val description = if (passwordVisible) "Esconder senha" else "Mostrar senha"
@@ -131,18 +124,15 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Mensagem de erro do AuthViewModel (ex: "usuário/e-mail já em uso").
         authViewModel.message?.let {
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
             Text(it, color = MaterialTheme.colorScheme.error)
         }
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
         Button(
             onClick = {
-                // Dispara o cadastro de verdade (validação + hash de senha + banco).
                 authViewModel.register(username, email, password)
                 password = ""
             },
@@ -154,10 +144,8 @@ fun RegisterScreen(
             Text(if (authViewModel.loading) "Aguarde..." else "Registrar-se")
         }
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceLarge))
 
-        // Seção onde o usuário não cadastrado pode criar a conta.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Possui conta?")
 
@@ -168,7 +156,6 @@ fun RegisterScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun RegisterScreenPreview() {

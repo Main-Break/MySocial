@@ -8,13 +8,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// DAO (Data Access Object) da tabela "posts". Mesma ideia do UserDAO: só essa classe
-// conversa com a tabela, e toda query usa "?" pra evitar SQL Injection.
 internal class PostDAO(context: Context) {
     private val appContext = context.applicationContext
 
-    // Cria um post novo pro usuário informado. A validação de tamanho (limite de 280
-    // caracteres) já aconteceu antes, lá no PostViewModel/PostValidator; aqui só grava.
     fun create(userId: Long, content: String) {
         AppDatabase(appContext).use { db ->
             val createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT).format(Date())
@@ -27,8 +23,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Lista todos os posts pro feed, já trazendo o username de quem postou (JOIN com a
-    // tabela users), do mais recente pro mais antigo.
     fun list(): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
@@ -56,8 +50,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Lista só os posts de um usuário (usado na tela de Perfil), mesmo JOIN e ordenação
-    // do list() acima, só que filtrado por "user_id".
     fun listByUser(userId: Long): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
@@ -86,9 +78,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Busca um post qualquer pelo id, sem checar dono. Usado na tela de detalhe do post,
-    // que qualquer pessoa logada pode visualizar (diferente do findById(id, userId) logo
-    // abaixo, que é só pra carregar a tela de edição do próprio dono).
     fun findById(id: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
@@ -110,8 +99,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Busca um post específico, mas só se pertencer ao usuário informado (mesma ideia de
-    // segurança do update/delete abaixo). Usado pra carregar os dados na tela de edição.
     fun findById(id: Long, currentUserId: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
@@ -133,8 +120,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Altera o conteúdo de um post. O "user_id = ?" na cláusula garante que só o dono
-    // do post consegue editá-lo, mesmo que o id do post seja adivinhado/forjado.
     fun update(id: Long, currentUserId: Long, content: String) {
         AppDatabase(appContext).use { db ->
             val values = ContentValues().apply { put("content", content) }
@@ -146,8 +131,6 @@ internal class PostDAO(context: Context) {
         }
     }
 
-    // Exclui um post. O "user_id = ?" na cláusula garante que só o dono do post
-    // consegue excluí-lo, mesmo que o id do post seja adivinhado/forjado.
     fun delete(id: Long, currentUserId: Long) {
         require(currentUserId > 0) { "Faça login para continuar" }
         AppDatabase(appContext).use { db ->

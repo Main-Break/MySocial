@@ -5,26 +5,13 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import java.io.File
 
-// Classe que cria e abre o banco SQLite do app. É aberta/fechada toda vez que um DAO
-// (UserDAO, PostDAO) precisa ler ou gravar algo, por isso ela fica bem enxuta.
 internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     context.applicationContext,
-    // noBackupFilesDir evita que o Android inclua o banco em backup automático na nuvem,
-    // já que ele guarda senha (mesmo em hash) e dado de usuário.
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    4 // versão do schema, usada pelo onUpgrade logo abaixo
+    4
 ) {
-    // Roda só uma vez, na primeira vez que o app abre e o banco ainda não existe.
-    // Aqui fica o schema completo e atual do banco (sempre consolidado, nunca espalhado
-    // em vários arquivos de migração separados).
     override fun onCreate(db: SQLiteDatabase) {
-        // Tabela de usuários cadastrados. A senha nunca é salva em texto puro: "password"
-        // guarda o hash (gerado pelo AuthManager) e "salt" o valor aleatório usado nesse hash.
-        // "cover_color" é a cor de fundo da capa do perfil (estilo X), escolhida uma vez
-        // no cadastro a partir de uma paleta fixa e guardada em hexadecimal (ex: "#1D9BF0").
-        // "bio" e o endereço (cep/rua/numero/bairro/cidade/estado) começam vazios no
-        // cadastro e são preenchidos depois, na tela de editar perfil.
         db.execSQL("""
             CREATE TABLE users(
             id INTEGER PRIMARY KEY,
@@ -43,8 +30,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             )
         """.trimIndent())
 
-        // Tabela de posts. "user_id" é o autor do post (referencia a tabela users).
-        // O CHECK de tamanho do conteúdo é o mesmo limite de 280 caracteres do Twitter/X.
         db.execSQL("""
             CREATE TABLE posts(
             id INTEGER PRIMARY KEY,
@@ -54,8 +39,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             )
         """.trimIndent())
 
-        // Tabela de quem segue quem. "follower_id" é quem segue, "followed_id" é quem é
-        // seguido. A chave primária composta impede seguir a mesma pessoa duas vezes.
         db.execSQL("""
             CREATE TABLE follows(
             follower_id INTEGER NOT NULL REFERENCES users(id),
@@ -64,7 +47,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             )
         """.trimIndent())
 
-        // Tabela de curtidas. Chave primária composta impede curtir o mesmo post duas vezes.
         db.execSQL("""
             CREATE TABLE likes(
             user_id INTEGER NOT NULL REFERENCES users(id),
@@ -73,7 +55,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             )
         """.trimIndent())
 
-        // Tabela de comentários de um post. Mesmo limite de tamanho dos posts (280).
         db.execSQL("""
             CREATE TABLE comments(
             id INTEGER PRIMARY KEY,
@@ -85,16 +66,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
         """.trimIndent())
     }
 
-    // Roda sozinho, automaticamente, sempre que o app abre e percebe que a versão do banco
-    // no celular do usuário é mais antiga que a versão declarada no construtor acima.
-    // Não existe (e não pode existir) nenhum passo manual no servidor/celular: é tudo aqui.
-    // Quando o schema mudar de verdade (ex: adicionar uma coluna nova), sobe o número da
-    // versão lá em cima e adiciona um "if (oldVersion < X) { db.execSQL(...) }" aqui,
-    // sem apagar os ifs de versões anteriores, pra quem estiver em qualquer versão antiga
-    // conseguir migrar sozinho, sem perder dado e sem precisar de ninguém rodar nada à mão.
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Quem já tinha o banco na versão 1 (sem a tabela follows) ganha ela aqui,
-        // sem perder os dados de users/posts que já existiam.
         if (oldVersion < 2) {
             db.execSQL("""
                 CREATE TABLE follows(
@@ -105,8 +77,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             """.trimIndent())
         }
 
-        // Quem já tinha o banco antes da versão 3 ganha a coluna de cor de capa, a tabela
-        // de curtidas e a de comentários, sem perder nenhum dado que já existia.
         if (oldVersion < 3) {
             db.execSQL("ALTER TABLE users ADD COLUMN cover_color TEXT NOT NULL DEFAULT '#1D9BF0'")
             db.execSQL("""
@@ -127,8 +97,6 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             """.trimIndent())
         }
 
-        // Quem já tinha o banco antes da versão 4 ganha a bio e o endereço, todos
-        // começando vazios, sem perder nenhum dado que já existia.
         if (oldVersion < 4) {
             db.execSQL("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''")
             db.execSQL("ALTER TABLE users ADD COLUMN cep TEXT NOT NULL DEFAULT ''")

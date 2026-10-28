@@ -15,8 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// Ponte entre a tela de detalhe do post e o banco, mesmo padrão MVVM do PostViewModel:
-// a tela só chama load()/create()/delete() e lê "comments" pra saber o que mostrar.
 class CommentViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = CommentDAO(application)
 
@@ -49,13 +47,11 @@ class CommentViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Busca todos os comentários de um post, mais antigo primeiro.
     fun load(postId: Long) = run {
         val result = withContext(Dispatchers.IO) { dao.listByPost(postId) }
         comments = result
     }
 
-    // Cria um comentário novo pro usuário logado e já recarrega a lista.
     fun create(postId: Long, content: String) = run {
         val userId = UserSession.requireUser()
         val trimmedContent = content.trim()
@@ -66,7 +62,6 @@ class CommentViewModel(application: Application) : AndroidViewModel(application)
         comments = withContext(Dispatchers.IO) { dao.listByPost(postId) }
     }
 
-    // Exclui um comentário do usuário logado e já tira ele da lista em tela.
     fun delete(id: Long) = run {
         val userId = UserSession.requireUser()
         withContext(Dispatchers.IO) { dao.delete(id, userId) }

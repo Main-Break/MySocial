@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
             MySocialTheme {
                 val navController = rememberNavController()
 
-                // Só mostra a barra de navegação do topo pra quem já passou do login/cadastro.
                 val currentEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = currentEntry?.destination?.route
                 val showTopBar = currentRoute != null &&

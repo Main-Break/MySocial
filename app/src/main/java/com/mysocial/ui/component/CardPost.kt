@@ -39,10 +39,6 @@ import com.mysocial.ui.theme.ErrorColor
 import com.mysocial.ui.theme.LikeColor
 import com.mysocial.ui.theme.Username
 
-// Uma linha de post no feed, no estilo do X: sem card/borda em volta, só uma linha
-// divisória fina embaixo separando um post do outro (ver HorizontalDivider no final
-// da função). O visual (avatar circular, menu de três pontinhos, curtida) segue o
-// jeito do X/Twitter mobile.
 @Composable
 fun CardPost(
     username: String,
@@ -51,21 +47,15 @@ fun CardPost(
     datePost: String,
     amountComments: Int,
     amountLikes: Int,
-    // Cor de fundo do avatar do autor (mesmo "cover_color" usado no perfil dele).
     avatarColor: Color = Username,
     isLiked: Boolean = false,
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
-    // true só quando o post é do usuário logado, pra mostrar o menu de Editar/Excluir
-    // (mesma regra de dono que já existe no PostDAO).
     isOwner: Boolean = false,
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
-    // Clicar em qualquer parte do card (menos os botões) abre o post na tela de detalhe.
     onClick: () -> Unit = {}
 ) {
-    // Controla se o menu de ações (Editar/Excluir) está aberto. Fica escondido atrás do
-    // ícone de "⋮" pra não deixar as opções evidentes na tela, só quem é dono as vê.
     var menuAberto by remember { mutableStateOf(false) }
 
     Column(
@@ -83,8 +73,6 @@ fun CardPost(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)
         ) {
-            // Avatar: círculo colorido (cor do perfil do autor) com o ícone padrão
-            // de pessoa dentro, mesmo jeito que o professor usa Image+painterResource.
             Box(
                 modifier = Modifier
                     .size(Dimens.avatarSize)
@@ -98,8 +86,6 @@ fun CardPost(
                 )
             }
 
-            // Nome em destaque, username e data logo depois, mas em texto mais fino
-            // (bodyMedium, sem negrito) e na cor secundária, pra não competir com o nome.
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.Bottom,
@@ -113,8 +99,6 @@ fun CardPost(
                 )
             }
 
-            // Menu de três pontinhos: só aparece pra quem é dono do post, e esconde
-            // Editar/Excluir atrás de um clique, em vez de deixar os botões soltos.
             if (isOwner) {
                 IconButton(onClick = { menuAberto = true }) {
                     Icon(
@@ -126,7 +110,6 @@ fun CardPost(
             }
         }
 
-        // Conteudo do Post
         Text(contentPost, style = MaterialTheme.typography.titleMedium)
 
         Row(
@@ -134,7 +117,6 @@ fun CardPost(
             horizontalArrangement = Arrangement.spacedBy(Dimens.spaceLarge)
         ) {
 
-            // Botão de Comentário: leva pro detalhe do post, onde dá pra comentar.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
@@ -148,7 +130,6 @@ fun CardPost(
                 Text(amountComments.toString(), style = MaterialTheme.typography.bodyMedium, color = Username)
             }
 
-            // Botão de Curtir: alterna entre curtido/não curtido a cada clique.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall),
@@ -168,10 +149,8 @@ fun CardPost(
         }
     }
 
-    // Linha divisória fina entre um post e outro, no lugar da borda/card antigos.
     HorizontalDivider(color = DarkBorder)
 
-    // Menu de ações do post (Editar/Excluir), aberto pelo ícone de três pontinhos.
     if (menuAberto) {
         AlertDialog(
             onDismissRequest = { menuAberto = false },

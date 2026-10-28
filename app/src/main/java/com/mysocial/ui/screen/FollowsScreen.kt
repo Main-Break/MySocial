@@ -26,10 +26,6 @@ import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.viewmodel.FollowsViewModel
 
-// Tela de Seguidores/Seguindo de um usuário. Igual ao X: um menu no topo com duas
-// abas (Seguidores / Seguindo), e trocar de aba só troca a lista mostrada, sem
-// precisar voltar e navegar de novo. "type" define qual aba abre primeiro (a que
-// a pessoa clicou lá no perfil).
 @Composable
 fun FollowsScreen(
     userId: Long,
@@ -40,13 +36,11 @@ fun FollowsScreen(
 ) {
     var abaSelecionada by remember(userId) { mutableStateOf(type) }
 
-    // Recarrega sempre que o userId ou a aba selecionada (seguidores/seguindo) mudar.
     LaunchedEffect(userId, abaSelecionada) {
         followsViewModel.load(userId, abaSelecionada)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Menu do topo com as duas opções, igual ao X.
         PrimaryTabRow(
             selectedTabIndex = if (abaSelecionada == TypeListFollows.FOLLOWERS) 0 else 1,
             contentColor = PrimaryColor
@@ -90,7 +84,6 @@ fun FollowsScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun FollowsScreenPreview() {

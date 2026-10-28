@@ -20,8 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// Reúne tudo que a tela de Perfil precisa mostrar: dados do dono do perfil, os posts
-// dele e a contagem/estado de seguidores. Mesmo padrão MVVM do AuthViewModel/PostViewModel.
 private data class ProfileData(
     val user: User?,
     val posts: List<Post>,
@@ -44,7 +42,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var posts by mutableStateOf<List<Post>>(emptyList())
         private set
 
-    // Curtidas/comentários de cada post do perfil (chave = id do post).
     var stats by mutableStateOf<Map<Long, PostStats>>(emptyMap())
         private set
 
@@ -54,7 +51,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var followingCount by mutableStateOf(0)
         private set
 
-    // true quando o usuário logado já segue o dono desse perfil.
     var isFollowing by mutableStateOf(false)
         private set
 
@@ -64,13 +60,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var message by mutableStateOf<String?>(null)
         private set
 
-    // Vira true quando a edição do perfil é salva com sucesso. A tela de edição
-    // observa isso pra voltar pro perfil, e depois chama consumeSaved() pra resetar.
     var saved by mutableStateOf(false)
         private set
 
-    // Mesma ideia do "run" do AuthViewModel/PostViewModel: evita clique duplo e
-    // transforma erro numa mensagem amigável.
     private fun run(operation: suspend () -> Unit) {
         if (loading) return
         loading = true
@@ -91,8 +83,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // Carrega tudo que a tela de perfil precisa: dados do usuário, posts dele, contadores
-    // de seguidores/seguindo e se quem está logado já o segue.
     fun load(profileUserId: Long) = run {
         val result = withContext(Dispatchers.IO) {
             val currentUserId = UserSession.userId
@@ -123,7 +113,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         stats = result.stats
     }
 
-    // Curte ou descurte um post do perfil, mesma lógica do PostViewModel.toggleLike.
     fun toggleLike(postId: Long) = run {
         val userId = UserSession.requireUser()
         val current = stats[postId] ?: PostStats()
@@ -137,7 +126,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         stats = stats + (postId to updated)
     }
 
-    // Passa a seguir o dono do perfil e já atualiza o contador na tela.
     fun follow(profileUserId: Long) = run {
         val currentUserId = UserSession.requireUser()
         withContext(Dispatchers.IO) { followDao.follow(currentUserId, profileUserId) }
@@ -145,7 +133,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         followersCount += 1
     }
 
-    // Deixa de seguir o dono do perfil e já atualiza o contador na tela.
     fun unfollow(profileUserId: Long) = run {
         val currentUserId = UserSession.requireUser()
         withContext(Dispatchers.IO) { followDao.unfollow(currentUserId, profileUserId) }
@@ -153,8 +140,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         followersCount = (followersCount - 1).coerceAtLeast(0)
     }
 
-    // Salva a edição da bio/endereço do próprio usuário logado e já atualiza o "user"
-    // em tela, sem precisar recarregar o perfil inteiro do banco.
     fun updateProfile(bio: String, cep: String, rua: String, numero: String, bairro: String, cidade: String, estado: String) = run {
         val currentUserId = UserSession.requireUser()
         withContext(Dispatchers.IO) {
@@ -171,8 +156,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         saved = false
     }
 
-    // Exclui um post exibido no perfil (só funciona se for do usuário logado, conferido
-    // lá no PostDAO.delete) e já tira ele da lista em tela.
     fun deletePost(id: Long) = run {
         val currentUserId = UserSession.requireUser()
         withContext(Dispatchers.IO) { postDao.delete(id, currentUserId) }

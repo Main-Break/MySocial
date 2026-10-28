@@ -34,4 +34,3 @@ object Users
 
 @Serializable
 enum class TypeListFollows { FOLLOW, FOLLOWERS }
-// Seguindo / Seguidores

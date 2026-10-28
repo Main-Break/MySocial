@@ -8,13 +8,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// DAO (Data Access Object) da tabela "comments". Mesmo padrão do PostDAO: toda query
-// usa "?" pra evitar SQL Injection, e o "created_at" é gerado aqui, na hora de gravar.
 internal class CommentDAO(context: Context) {
     private val appContext = context.applicationContext
 
-    // Cria um comentário novo num post. A validação de tamanho já aconteceu antes, lá
-    // no ViewModel/CommentValidator; aqui só grava.
     fun create(postId: Long, userId: Long, content: String) {
         AppDatabase(appContext).use { db ->
             val createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT).format(Date())
@@ -28,8 +24,6 @@ internal class CommentDAO(context: Context) {
         }
     }
 
-    // Lista os comentários de um post, mais antigo primeiro (ordem de conversa), já
-    // trazendo o username de quem comentou (JOIN com a tabela users).
     fun listByPost(postId: Long): List<Comment> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
@@ -59,7 +53,6 @@ internal class CommentDAO(context: Context) {
         }
     }
 
-    // Quantos comentários um post tem, pro contador no card do post.
     fun countByPost(postId: Long): Int = AppDatabase(appContext).use { db ->
         db.readableDatabase.query(
             "comments", arrayOf("id"), "post_id = ?",
@@ -67,8 +60,6 @@ internal class CommentDAO(context: Context) {
         ).use { cursor -> cursor.count }
     }
 
-    // Exclui um comentário. O "user_id = ?" garante que só o dono do comentário
-    // consegue excluí-lo.
     fun delete(id: Long, currentUserId: Long) {
         AppDatabase(appContext).use { db ->
             val deleted = db.writableDatabase.delete(

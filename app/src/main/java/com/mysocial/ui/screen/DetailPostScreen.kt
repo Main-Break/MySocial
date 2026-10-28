@@ -62,9 +62,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// Ao clicar em um post ele abre nessa tela, mostrando ele por completo, com curtir e
-// a lista de comentários (com campo pra comentar) abaixo. Se o post for do usuário
-// logado, o menu de três pontinhos no cabeçalho mostra Editar/Excluir.
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DetailPostScreen(
@@ -81,7 +78,6 @@ fun DetailPostScreen(
         commentViewModel.load(postId)
     }
 
-    // Quando a exclusão do post termina com sucesso, volta sozinho pro feed.
     LaunchedEffect(postViewModel.published) {
         if (postViewModel.published) {
             postViewModel.consumePublished()
@@ -192,7 +188,6 @@ fun DetailPostScreen(
         }
 
         if (post != null) {
-            // Campo pra escrever um comentário novo, mesmo padrão do PostScreen.
             item {
                 Column(
                     modifier = Modifier
@@ -249,7 +244,6 @@ fun DetailPostScreen(
         }
     }
 
-    // Menu de ações do post (Editar/Excluir), mesmo padrão do CardPost.
     if (menuAberto) {
         AlertDialog(
             onDismissRequest = { menuAberto = false },
@@ -290,7 +284,6 @@ fun DetailPostScreen(
     }
 }
 
-// Para vizualizar a tela
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable

@@ -56,10 +56,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// Tela de perfil de um usuário: capa colorida (cor própria do usuário, ver
-// User.coverColor), avatar sobreposto à capa, contadores de seguidores/seguindo
-// (clicáveis, levam pra FollowsScreen), botão de seguir/deixar de seguir (some no
-// próprio perfil) e a lista de posts dele, reaproveitando o mesmo CardPost do Feed.
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(
@@ -71,8 +67,6 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit = {},
     profileViewModel: ProfileViewModel = viewModel()
 ) {
-    // Busca os dados do perfil assim que a tela abre, ou sempre que o userId mudar
-    // (ex: ao navegar de um perfil pra outro clicando em outro usuário).
     LaunchedEffect(userId) {
         profileViewModel.load(userId)
     }
@@ -97,10 +91,6 @@ fun ProfileScreen(
             if (user != null) {
                 val corCapa = Color(android.graphics.Color.parseColor(user.coverColor))
 
-                // Capa colorida com o avatar grande sobreposto na parte de baixo, e o
-                // botão de Seguir/Editar perfil flutuando no canto superior direito, na
-                // mesma altura do avatar. Esse é exatamente o layout do cabeçalho de
-                // perfil do X: o botão NUNCA fica empilhado junto com nome/bio embaixo.
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Box(
                         modifier = Modifier
@@ -127,16 +117,12 @@ fun ProfileScreen(
                         )
                     }
 
-                    // Botão flutuante: alinhado à direita, descido até a altura do
-                    // centro do avatar (coverHeight menos metade da altura do botão).
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(end = Dimens.spaceLarge)
                             .offset(y = Dimens.coverHeight - Dimens.spaceLarge)
                     ) {
-                        // No próprio perfil mostra "Editar perfil"; no de outra pessoa,
-                        // mostra o botão de seguir/deixar de seguir.
                         if (UserSession.userId == userId) {
                             OutlinedButton(
                                 onClick = onNavigateToEditProfile,
@@ -170,7 +156,6 @@ fun ProfileScreen(
                         .padding(
                             start = Dimens.spaceLarge,
                             end = Dimens.spaceLarge,
-                            // Espaço reservado pro avatar, que fica sobreposto à capa.
                             top = Dimens.avatarSizeLarge / 2 + Dimens.spaceSmall
                         ),
                     verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
@@ -178,17 +163,14 @@ fun ProfileScreen(
                     Text(user.username, style = MaterialTheme.typography.titleLarge)
                     Text("@${user.username}", color = Username, style = MaterialTheme.typography.titleMedium)
 
-                    // Bio, só aparece se o usuário já preencheu uma.
                     if (user.bio.isNotBlank()) {
                         Text(user.bio, style = MaterialTheme.typography.bodyLarge)
                     }
 
-                    // Cidade/estado, só aparece se o endereço já foi preenchido.
                     if (user.cidade.isNotBlank() || user.estado.isNotBlank()) {
                         Text("📍 ${listOf(user.cidade, user.estado).filter { it.isNotBlank() }.joinToString(" - ")}", color = Username)
                     }
 
-                    // Contadores clicáveis: abrem a lista de seguidores/seguindo.
                     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceLarge)) {
                         Row(modifier = Modifier.clickable { onNavigateToFollows(TypeListFollows.FOLLOWERS) }) {
                             Text("${profileViewModel.followersCount} ")
@@ -237,7 +219,6 @@ fun ProfileScreen(
         }
     }
 
-    // Confirmação de exclusão, mesmo padrão do Feed.
     val postParaExcluir = profileViewModel.posts.firstOrNull { it.id == deleteId }
     if (postParaExcluir != null) {
         AlertDialog(
@@ -257,7 +238,6 @@ fun ProfileScreen(
     }
 }
 
-// Para vizualizar a tela
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable

@@ -42,12 +42,6 @@ import com.mysocial.ui.theme.Username
 import com.mysocial.ui.viewmodel.PostViewModel
 import com.mysocial.validation.PostValidator
 
-// Tela onde será feito um novo post (postId nulo) ou editado um post existente
-// (postId informado). O campo de texto é grande e sem caixa visível, igual ao
-// compositor de post do X: o "X" no canto superior esquerdo volta pra tela anterior
-// sem fazer nada com o que foi digitado (o rascunho só é perdido se a pessoa
-// publicar ou realmente sair da tela, não só por tocar sem querer).
-
 @Composable
 fun PostScreen(
     modifier: Modifier = Modifier,
@@ -57,8 +51,6 @@ fun PostScreen(
 ) {
     var content by remember { mutableStateOf("") }
 
-    // Modo edição: assim que a tela abre, busca o post no banco (só funciona se for do
-    // usuário logado) e preenche o campo de texto com o conteúdo atual dele.
     LaunchedEffect(postId) {
         if (postId != null) postViewModel.loadForEdit(postId)
     }
@@ -66,7 +58,6 @@ fun PostScreen(
         postViewModel.editTarget?.let { content = it.content }
     }
 
-    // Quando o post é publicado (ou a edição é salva) com sucesso, volta pro feed sozinho.
     LaunchedEffect(postViewModel.published) {
         if (postViewModel.published) {
             postViewModel.consumePublished()
@@ -77,16 +68,10 @@ fun PostScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            // Empurra o conteúdo pra cima do teclado quando ele abre, em vez de deixar
-            // o Compose redimensionar a tela inteira a cada tecla (isso, combinado com
-            // windowSoftInputMode="adjustResize" no Manifest, é a causa mais comum de
-            // acento/composição de teclado "sumir" no meio da digitação).
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(Dimens.spaceLarge)
     ) {
-        // Cabeçalho: "X" pra voltar sem publicar nada, e o botão de publicar/salvar
-        // do outro lado, igual ao topo do compositor do X.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -97,8 +82,6 @@ fun PostScreen(
             }
 
             Button(
-                // Dispara a criação (ou a edição, se postId foi informado) de verdade,
-                // validando o conteúdo e gravando no banco.
                 onClick = {
                     if (postId == null) postViewModel.create(content)
                     else postViewModel.update(postId, content)
@@ -117,15 +100,10 @@ fun PostScreen(
             }
         }
 
-        // Espaçamento entre as seções.
         Spacer(modifier = Modifier.height(Dimens.spaceMedium))
 
-        // Campo de texto grande, sem caixa visível (fundo e indicador transparentes),
-        // ocupando o resto da tela, igual ao compositor do X.
         TextField(
             value = content,
-            // Já trava a digitação em 280 caracteres aqui na tela (mesmo limite do
-            // PostValidator), pra nem deixar passar do limite ao digitar.
             onValueChange = { if (it.length <= PostValidator.MAX_LENGTH) content = it },
             placeholder = { Text("O que está acontecendo?") },
             minLines = 6,
@@ -141,7 +119,6 @@ fun PostScreen(
                 .heightIn(min = 220.dp)
         )
 
-        // Contador "123/280", alinhado à direita, igual ao X.
         Text(
             "${content.length}/${PostValidator.MAX_LENGTH}",
             color = Username,
@@ -150,7 +127,6 @@ fun PostScreen(
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // Mensagem de erro do PostViewModel (ex: post vazio).
         postViewModel.message?.let {
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))
             Text(it, color = MaterialTheme.colorScheme.error)
@@ -158,7 +134,6 @@ fun PostScreen(
     }
 }
 
-// Para vizualizar a tela
 @Preview(showBackground = true)
 @Composable
 fun PostScreenPreview() {
