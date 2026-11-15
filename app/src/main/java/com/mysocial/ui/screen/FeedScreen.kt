@@ -1,0 +1,129 @@
+package com.mysocial.ui.screen
+
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mysocial.auth.UserSession
+import com.mysocial.data.PostStats
+import com.mysocial.ui.component.CardPost
+import com.mysocial.ui.theme.Dimens
+import com.mysocial.ui.theme.MySocialTheme
+import com.mysocial.ui.theme.Username
+import com.mysocial.ui.viewmodel.PostViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun FeedScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToEditPost: (Long) -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
+    postViewModel: PostViewModel = viewModel()
+) {
+    LaunchedEffect(Unit) {
+        postViewModel.list()
+    }
+
+    var deleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        if (postViewModel.loading) {
+            item { CircularProgressIndicator() }
+        }
+
+        if (!postViewModel.loading && postViewModel.posts.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(Dimens.spaceLarge),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)
+                ) {
+                    Text("Nenhum post por aqui ainda", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Quando você postar algo ou seguir alguém que postou, os posts vão aparecer aqui.",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Username
+                    )
+                }
+            }
+        }
+
+        items(postViewModel.posts, key = { it.id }) { post ->
+
+            val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
+            val date = LocalDateTime.parse(post.createdAt)
+
+            val stats = postViewModel.stats[post.id] ?: PostStats()
+
+            CardPost(
+                username = post.author,
+                name = post.author,
+                contentPost = post.content,
+                image = post.image,
+                datePost = date.format(formatter),
+                amountComments = stats.comments,
+                amountLikes = stats.likes,
+                avatarColor = Color(android.graphics.Color.parseColor(post.authorCoverColor)),
+                isLiked = stats.likedByMe,
+                onLikeClick = { postViewModel.toggleLike(post.id) },
+                onCommentClick = { onNavigateToDetail(post.id) },
+                isOwner = post.userId == UserSession.userId,
+                onEditClick = { onNavigateToEditPost(post.id) },
+                onDeleteClick = { deleteId = post.id },
+                onClick = { onNavigateToDetail(post.id) }
+            )
+        }
+    }
+
+    val postParaExcluir = postViewModel.posts.firstOrNull { it.id == deleteId }
+    if (postParaExcluir != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text("Excluir post?") },
+            text = { Text("Essa ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleteId = null
+                        postViewModel.delete(postParaExcluir.id)
+                    }
+                ) { Text("Excluir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteId = null }) { Text("Cancelar") }
+            }
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+fun FeedScreenPreview() {
+    MySocialTheme {
+        FeedScreen()
+    }
+}

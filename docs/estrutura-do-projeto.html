@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>MySocial: Estrutura do Projeto</title>
+<style>
+    @page { margin: 2cm; }
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #1a1a1a;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px;
+        line-height: 1.5;
+    }
+    header {
+        border-bottom: 3px solid #1D9BF0;
+        padding-bottom: 12px;
+        margin-bottom: 24px;
+    }
+    header h1 { margin-bottom: 4px; }
+    header p { color: #555; margin: 2px 0; }
+    nav#sumario {
+        background: #f4f6f8;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px 24px;
+        margin-bottom: 28px;
+    }
+    nav#sumario h2 { margin-top: 0; font-size: 1.1em; }
+    nav#sumario ol { margin: 0; padding-left: 20px; }
+    nav#sumario li { margin-bottom: 4px; }
+    nav#sumario a { color: #1D9BF0; text-decoration: none; }
+    nav#sumario a:hover { text-decoration: underline; }
+
+    h2 {
+        border-left: 5px solid #1D9BF0;
+        padding-left: 10px;
+        margin-top: 32px;
+        margin-bottom: 8px;
+        background: #f4f6f8;
+        /* Nunca deixa o título sozinho no fim da página, sem o conteúdo dele junto. */
+        break-after: avoid-page;
+        page-break-after: avoid;
+    }
+    h3 {
+        margin-top: 18px;
+        margin-bottom: 4px;
+        color: #0d6ab0;
+        break-after: avoid-page;
+        page-break-after: avoid;
+    }
+    p {
+        margin: 6px 0;
+        font-size: 0.95em;
+        /* Evita deixar só 1-2 linhas sozinhas no topo/fim de uma página. */
+        orphans: 3;
+        widows: 3;
+    }
+    code {
+        background: #f0f0f0;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.9em;
+    }
+    pre {
+        background: #1e1e1e;
+        color: #e0e0e0;
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.78em;
+    }
+    .caixa {
+        background: #fffbe6;
+        border: 1px solid #e6d27a;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin: 10px 0;
+        font-size: 0.88em;
+    }
+    ul { margin: 4px 0; padding-left: 20px; font-size: 0.95em; }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85em;
+        margin: 8px 0;
+        break-inside: avoid;
+    }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 4px 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    footer {
+        margin-top: 40px;
+        border-top: 1px solid #ddd;
+        padding-top: 12px;
+        font-size: 0.8em;
+        color: #777;
+    }
+
+    /* Impressão em preto e branco: troca cores por tons neutros, pra não gastar
+       tinta colorida nem ficar ilegível numa impressora P&B. */
+    @media print {
+        h2 { border-left-color: #000; background: #eee; }
+        h3 { color: #000; }
+        header { border-bottom-color: #000; }
+        header p, nav#sumario a, footer { color: #333 !important; }
+        nav#sumario { background: #f2f2f2; border-color: #999; }
+        nav#sumario a { color: #000; text-decoration: underline; }
+        .caixa { background: #f2f2f2; border-color: #999; }
+        pre { background: #f2f2f2; color: #111; border: 1px solid #999; }
+        th { background: #e0e0e0; }
+        table, th, td { border-color: #666; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>MySocial: Estrutura do Projeto</h1>
+    <p>Clone simplificado do X (Twitter), feito em Kotlin + Jetpack Compose, para a disciplina de Desenvolvimento de Aplicativos Móveis.</p>
+    <p>Documento de apoio para a defesa de código em equipe. Explica como o projeto está organizado e por quê.</p>
+</header>
+
+<nav id="sumario">
+    <h2>Sumário</h2>
+    <ol>
+        <li><a href="#visao-geral">Visão geral do app</a></li>
+        <li><a href="#pacotes">Separação dos pacotes (pastas)</a></li>
+        <li><a href="#mvvm">O padrão MVVM aplicado aqui</a></li>
+        <li><a href="#fluxo">Fluxo completo de uma ação (exemplo: criar um post)</a></li>
+        <li><a href="#banco">Banco de dados e migração automática</a></li>
+        <li><a href="#seguranca">Decisões de segurança</a></li>
+        <li><a href="#rotas">Mapa de telas e rotas</a></li>
+    </ol>
+</nav>
+
+<div class="conteudo">
+
+<h2 id="visao-geral">1. Visão geral do app</h2>
+<p>O MySocial é um app de rede social no estilo do X: qualquer pessoa cadastrada pode publicar posts de até 280 caracteres, seguir outras pessoas e ver um feed com os posts mais recentes.</p>
+<p>Funcionalidades implementadas:</p>
+<ul>
+    <li>Cadastro e login (com e-mail ou @username) com senha protegida por hash (nunca texto puro).</li>
+    <li>Controle de sessão (quem está logado agora).</li>
+    <li>Feed de posts, mais recente primeiro.</li>
+    <li>Criar, editar e excluir post (CRUD completo), com compositor estilo X (campo grande, sem caixa, "X" pra fechar).</li>
+    <li>Perfil de usuário com bio, endereço e contagem de seguidores e seguindo.</li>
+    <li>Editar o próprio perfil (bio e endereço: CEP, rua, número, bairro, cidade, estado).</li>
+    <li>Busca de usuários por username, pra achar alguém e seguir.</li>
+    <li>Seguir e deixar de seguir outro usuário.</li>
+    <li>Lista de seguidores e de quem o usuário segue, com abas pra trocar entre as duas (igual ao X).</li>
+    <li>Tela de detalhe de um post, com curtida e comentários.</li>
+    <li>Curtir e descurtir post.</li>
+    <li>Comentar um post e excluir o próprio comentário.</li>
+    <li>Perfil com capa colorida (cor própria de cada usuário) e avatar.</li>
+</ul>
+
+<h2 id="pacotes">2. Separação dos pacotes (pastas)</h2>
+<p>Todo o código fica em <code>com.mysocial</code>, dividido por responsabilidade:</p>
+
+<h3>auth/</h3>
+<p>Tudo relacionado a autenticação e sessão. <code>AuthManager</code> cuida de gerar e conferir o hash da senha. <code>UserSession</code> guarda em memória qual usuário está logado no momento.</p>
+
+<h3>data/</h3>
+<p>As "entidades" do app (<code>User</code>, <code>Post</code>, <code>Comment</code>, <code>PostStats</code>), o acesso ao SQLite (<code>data/local/AppDatabase.kt</code>) e os DAOs (<code>data/dal/</code>), que são as únicas classes que executam SQL de verdade: <code>UserDAO</code>, <code>PostDAO</code>, <code>FollowDAO</code>, <code>LikeDAO</code> e <code>CommentDAO</code>.</p>
+
+<h3>navigation/</h3>
+<p><code>Routes.kt</code> define cada tela do app como uma classe/objeto serializável. <code>AppNavigation.kt</code> monta o <code>NavHost</code> que liga cada rota à tela correspondente e decide pra onde navegar quando uma ação termina.</p>
+
+<h3>ui/screen/</h3>
+<p>As telas em si (um <code>@Composable</code> por arquivo): Login, Cadastro, Feed, Post (criar/editar), Perfil, Editar Perfil, Seguidores/Seguindo, Busca de Usuários e Detalhe do Post.</p>
+
+<h3>ui/component/</h3>
+<p>Pedaços de interface reaproveitados em mais de uma tela: <code>CardPost</code> (linha de um post no feed/perfil/detalhe), <code>UserRow</code> (linha de um usuário na busca e na lista de seguidores/seguindo) e <code>TopNavBar</code> (barra do topo).</p>
+
+<h3>ui/viewmodel/</h3>
+<p>A "ponte" entre a tela e o banco de dados: <code>AuthViewModel</code>, <code>PostViewModel</code>, <code>ProfileViewModel</code>, <code>FollowsViewModel</code>, <code>CommentViewModel</code>, <code>UsersViewModel</code>. Nenhuma tela acessa um DAO diretamente, sempre passa por um ViewModel.</p>
+
+<h3>ui/theme/</h3>
+<p>Cores, espaçamentos (<code>Dimens</code>) e tipografia do app. Centralizado aqui pra não espalhar número/cor mágica pelo código das telas.</p>
+
+<h3>validation/</h3>
+<p>Regras de "o que é um dado válido": <code>PostValidator</code> (limite de 280 caracteres) e <code>RegisterValidator</code> (regras de cadastro).</p>
+
+<h2 id="mvvm">3. O padrão MVVM aplicado aqui</h2>
+<p>MVVM significa Model, View, ViewModel. É uma forma de separar "o que o app mostra" de "como o app funciona por dentro".</p>
+<table>
+<tr><th>Camada</th><th>Onde fica</th><th>Responsabilidade</th></tr>
+<tr><td>Model</td><td><code>data/</code></td><td>Dados puros (<code>Post</code>, <code>User</code>) e acesso ao banco (DAOs)</td></tr>
+<tr><td>View</td><td><code>ui/screen/</code>, <code>ui/component/</code></td><td>Só desenha a tela, não sabe nada de SQL</td></tr>
+<tr><td>ViewModel</td><td><code>ui/viewmodel/</code></td><td>Liga a View ao Model, guarda o estado da tela</td></tr>
+</table>
+<p>A regra de ouro: a tela nunca fala com o banco direto. Ela só chama uma função do ViewModel (tipo <code>postViewModel.create(texto)</code>) e fica "olhando" um estado (<code>postViewModel.posts</code>) pra saber o que desenhar. Isso significa que dá pra trocar a tela inteira sem mexer na lógica de banco, e vice versa.</p>
+
+<h2 id="fluxo">4. Fluxo completo de uma ação (exemplo: criar um post)</h2>
+<p>Passo a passo do que acontece quando alguém clica em "Postar":</p>
+<ol>
+<li><code>PostScreen</code> chama <code>postViewModel.create(texto)</code>.</li>
+<li><code>PostViewModel</code> pega o id do usuário logado em <code>UserSession</code>.</li>
+<li>Valida o texto com <code>PostValidator.validate(...)</code>. Se for inválido, já para aqui e mostra erro.</li>
+<li>Chama <code>PostDAO.create(...)</code> dentro de uma coroutine na thread de I/O (<code>Dispatchers.IO</code>), pra não travar a tela.</li>
+<li><code>PostDAO</code> monta um <code>ContentValues</code> e grava na tabela <code>posts</code> usando <code>insertOrThrow</code>.</li>
+<li>Se der tudo certo, o ViewModel marca <code>published = true</code>.</li>
+<li>A tela está "escutando" esse valor com um <code>LaunchedEffect</code>, percebe a mudança e navega de volta pro Feed.</li>
+</ol>
+<div class="caixa">Esse mesmo padrão (tela chama função, ViewModel valida e grava, estado muda, tela reage) se repete em todas as outras operações: login, cadastro, editar post, seguir alguém, etc.</div>
+
+<h2 id="banco">5. Banco de dados e migração automática</h2>
+<p>O banco é SQLite puro, sem Room nem nenhum ORM, acessado via <code>SQLiteOpenHelper</code> (classe <code>AppDatabase</code>). Cinco tabelas: <code>users</code> (com <code>cover_color</code>, a cor de capa do perfil, e os campos de bio/endereço: <code>bio</code>, <code>cep</code>, <code>rua</code>, <code>numero</code>, <code>bairro</code>, <code>cidade</code>, <code>estado</code>), <code>posts</code>, <code>follows</code>, <code>likes</code> e <code>comments</code>.</p>
+<p>O schema inteiro e atualizado vive dentro do método <code>onCreate</code>, num lugar só (nunca espalhado em vários arquivos "update_1.sql", "update_2.sql" etc.). Quando uma tabela ou coluna nova é adicionada depois (follows na versão 2, cover_color/likes/comments na versão 3, bio/endereço na versão 4), o número da versão do banco sobe, e o método <code>onUpgrade</code> aplica a diferença sozinho, na hora que o app abre, sem precisar de nenhum passo manual.</p>
+<pre>override fun onUpgrade(db, oldVersion, newVersion) {
+    if (oldVersion &lt; 2) {
+        db.execSQL("CREATE TABLE follows(...)")
+    }
+    if (oldVersion &lt; 3) {
+        db.execSQL("ALTER TABLE users ADD COLUMN cover_color ...")
+        db.execSQL("CREATE TABLE likes(...)")
+        db.execSQL("CREATE TABLE comments(...)")
+    }
+    if (oldVersion &lt; 4) {
+        db.execSQL("ALTER TABLE users ADD COLUMN bio ...")
+        db.execSQL("ALTER TABLE users ADD COLUMN cep ...")
+        // (e o resto dos campos de endereço, mesma ideia)
+    }
+}</pre>
+<p>Isso evita o problema clássico de "esqueceram de rodar a migração em produção": quem já tinha o app instalado numa versão antiga recebe a tabela/coluna nova automaticamente, sem perder os dados que já existiam.</p>
+
+<h2 id="seguranca">6. Decisões de segurança</h2>
+<ul>
+<li><strong>SQL Injection:</strong> toda query usa <code>?</code> no lugar do valor (bind parameters). Nunca é feita concatenação de texto do usuário dentro de uma query.</li>
+<li><strong>Senha:</strong> nunca é salva em texto puro. Vira um hash com PBKDF2 (60 mil iterações) mais um "salt" aleatório por usuário, então duas pessoas com a mesma senha nunca têm o mesmo hash salvo.</li>
+<li><strong>Dono do dado:</strong> editar ou excluir um post só funciona se o <code>user_id</code> do post bater com quem está logado. Essa checagem acontece dentro do próprio <code>PostDAO</code>, não só na tela, então não dá pra burlar.</li>
+<li><strong>Banco fora do backup:</strong> o arquivo do banco fica em <code>noBackupFilesDir</code>, pra não ser incluído em backup automático na nuvem do Android.</li>
+</ul>
+
+<h2 id="rotas">7. Mapa de telas e rotas</h2>
+<table>
+<tr><th>Rota</th><th>Tela</th><th>Precisa estar logado?</th></tr>
+<tr><td><code>LoginUser</code></td><td>Login</td><td>Não</td></tr>
+<tr><td><code>RegisterUser</code></td><td>Cadastro</td><td>Não</td></tr>
+<tr><td><code>Feed</code></td><td>Lista de posts</td><td>Sim</td></tr>
+<tr><td><code>RegisterPost</code></td><td>Criar post</td><td>Sim</td></tr>
+<tr><td><code>EditPost(postId)</code></td><td>Editar post</td><td>Sim, só o dono</td></tr>
+<tr><td><code>DetailPost(postId)</code></td><td>Detalhe do post</td><td>Sim</td></tr>
+<tr><td><code>Profile(userId)</code></td><td>Perfil de um usuário</td><td>Sim</td></tr>
+<tr><td><code>EditProfile</code></td><td>Editar o próprio perfil</td><td>Sim</td></tr>
+<tr><td><code>Follows(userId, type)</code></td><td>Seguidores ou seguindo</td><td>Sim</td></tr>
+<tr><td><code>Users</code></td><td>Busca de usuários</td><td>Sim</td></tr>
+</table>
+<p>Quem tenta acessar uma rota protegida sem estar logado é redirecionado pro Login automaticamente (lógica dentro de um <code>LaunchedEffect</code> em <code>AppNavigation.kt</code>). As telas de Login e Cadastro são as únicas sem a barra de navegação do topo.</p>
+
+</div>
+
+<footer>
+    Documento gerado como material de apoio interno do projeto MySocial (trabalho acadêmico). Reflete o estado do código na branch de contingência do projeto.
+</footer>
+
+</body>
+</html>

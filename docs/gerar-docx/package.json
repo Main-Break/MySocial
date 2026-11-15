@@ -1,0 +1,8 @@
+{
+  "name": "gerar-docx-mysocial",
+  "private": true,
+  "description": "Gera os .docx da documentacao do MySocial (formatacao ABNT) a partir de doc1.js/doc2.js",
+  "dependencies": {
+    "docx": "^9"
+  }
+}
