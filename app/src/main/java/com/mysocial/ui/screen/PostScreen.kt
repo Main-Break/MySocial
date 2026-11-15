@@ -154,7 +154,11 @@ fun PostScreen(
                     Icon(Icons.Default.PhotoCamera, contentDescription = "Tirar foto", tint = PrimaryColor)
                 }
                 IconButton(onClick = {
-                    galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    try {
+                        galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } catch (_: Exception) {
+                        postViewModel.reportGalleryFailure()
+                    }
                 }) {
                     Icon(Icons.Default.PhotoLibrary, contentDescription = "Escolher da galeria", tint = PrimaryColor)
                 }

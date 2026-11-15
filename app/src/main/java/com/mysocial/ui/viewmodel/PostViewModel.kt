@@ -76,6 +76,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         message = "Não foi possível abrir a câmera"
     }
 
+    fun reportGalleryFailure() {
+        message = "Não foi possível abrir a galeria"
+    }
+
     private fun run(operation: suspend () -> Unit) {
         if (loading) return
         loading = true
