@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -20,12 +21,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.auth.UserSession
@@ -33,13 +36,16 @@ import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.theme.Username
+import com.mysocial.ui.viewmodel.CepState
+import com.mysocial.ui.viewmodel.CepViewModel
 import com.mysocial.ui.viewmodel.ProfileViewModel
 
 @Composable
 fun EditProfileScreen(
     modifier: Modifier = Modifier,
     voltar: () -> Unit = {},
-    profileViewModel: ProfileViewModel = viewModel()
+    profileViewModel: ProfileViewModel = viewModel(),
+    cepViewModel: CepViewModel = viewModel()
 ) {
     val userId = UserSession.requireUser()
 
@@ -54,6 +60,19 @@ fun EditProfileScreen(
     var bairro by remember { mutableStateOf("") }
     var cidade by remember { mutableStateOf("") }
     var estado by remember { mutableStateOf("") }
+
+    val estadoCep by cepViewModel.estadoCep.collectAsState()
+
+    LaunchedEffect(estadoCep) {
+        val resultado = estadoCep
+        if (resultado is CepState.Success) {
+            rua = resultado.dados.logradouro.orEmpty().take(120)
+            bairro = resultado.dados.bairro.orEmpty().take(80)
+            cidade = resultado.dados.cidade.orEmpty().take(80)
+            estado = resultado.dados.uf.orEmpty().take(2)
+            cepViewModel.consumirResultado()
+        }
+    }
 
     LaunchedEffect(profileViewModel.user) {
         profileViewModel.user?.let {
@@ -118,13 +137,31 @@ fun EditProfileScreen(
 
         Text("Endereço", style = MaterialTheme.typography.titleMedium)
 
-        OutlinedTextField(
-            value = cep,
-            onValueChange = { if (it.length <= 9) cep = it },
-            label = { Text("CEP") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.spaceSmall),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = cep,
+                onValueChange = { if (it.length <= 9) cep = it },
+                label = { Text("CEP") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = { cepViewModel.consultarCep(cep) },
+                enabled = estadoCep !is CepState.Loading,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryColor)
+            ) { Text("Buscar") }
+        }
+
+        when (val resultado = estadoCep) {
+            is CepState.Loading -> CircularProgressIndicator()
+            is CepState.Error -> Text(resultado.mensagem, color = MaterialTheme.colorScheme.error)
+            else -> {}
+        }
         OutlinedTextField(
             value = rua,
             onValueChange = { if (it.length <= 120) rua = it },
