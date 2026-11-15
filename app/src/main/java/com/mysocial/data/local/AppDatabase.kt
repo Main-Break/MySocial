@@ -9,7 +9,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     context.applicationContext,
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    4
+    5
 ) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -35,7 +35,8 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(id),
             content TEXT NOT NULL CHECK(length(content) BETWEEN 1 AND 280),
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            image BLOB
             )
         """.trimIndent())
 
@@ -69,7 +70,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
             db.execSQL("""
-                CREATE TABLE follows(
+                CREATE TABLE IF NOT EXISTS follows(
                 follower_id INTEGER NOT NULL REFERENCES users(id),
                 followed_id INTEGER NOT NULL REFERENCES users(id),
                 PRIMARY KEY (follower_id, followed_id)
@@ -78,16 +79,16 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
         }
 
         if (oldVersion < 3) {
-            db.execSQL("ALTER TABLE users ADD COLUMN cover_color TEXT NOT NULL DEFAULT '#1D9BF0'")
+            adicionarColuna(db, "users", "cover_color", "TEXT NOT NULL DEFAULT '#1D9BF0'")
             db.execSQL("""
-                CREATE TABLE likes(
+                CREATE TABLE IF NOT EXISTS likes(
                 user_id INTEGER NOT NULL REFERENCES users(id),
                 post_id INTEGER NOT NULL REFERENCES posts(id),
                 PRIMARY KEY (user_id, post_id)
                 )
             """.trimIndent())
             db.execSQL("""
-                CREATE TABLE comments(
+                CREATE TABLE IF NOT EXISTS comments(
                 id INTEGER PRIMARY KEY,
                 post_id INTEGER NOT NULL REFERENCES posts(id),
                 user_id INTEGER NOT NULL REFERENCES users(id),
@@ -98,13 +99,33 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
         }
 
         if (oldVersion < 4) {
-            db.execSQL("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN cep TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN rua TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN numero TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN bairro TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN cidade TEXT NOT NULL DEFAULT ''")
-            db.execSQL("ALTER TABLE users ADD COLUMN estado TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "bio", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "cep", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "rua", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "numero", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "bairro", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "cidade", "TEXT NOT NULL DEFAULT ''")
+            adicionarColuna(db, "users", "estado", "TEXT NOT NULL DEFAULT ''")
+        }
+
+        if (oldVersion < 5) {
+            adicionarColuna(db, "posts", "image", "BLOB")
+        }
+    }
+
+    /**
+     * Adiciona a coluna só se ela ainda não existir, pra migração nunca quebrar
+     * caso o banco já tenha sido alterado antes (teste manual, app reinstalado
+     * fora de ordem, etc).
+     */
+    private fun adicionarColuna(db: SQLiteDatabase, tabela: String, coluna: String, definicao: String) {
+        val jaExiste = db.rawQuery("PRAGMA table_info($tabela)", null).use { cursor ->
+            val indiceNome = cursor.getColumnIndex("name")
+            generateSequence { if (cursor.moveToNext()) cursor.getString(indiceNome) else null }
+                .any { it == coluna }
+        }
+        if (!jaExiste) {
+            db.execSQL("ALTER TABLE $tabela ADD COLUMN $coluna $definicao")
         }
     }
 }

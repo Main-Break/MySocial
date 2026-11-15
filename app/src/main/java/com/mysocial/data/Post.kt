@@ -6,5 +6,6 @@ data class Post(
     val author: String,
     val authorCoverColor: String,
     val content: String,
-    val createdAt: String
+    val createdAt: String,
+    val image: ByteArray? = null
 )

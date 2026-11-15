@@ -1,6 +1,8 @@
 package com.mysocial.ui.viewmodel
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mysocial.auth.UserSession
 import com.mysocial.data.Post
+import com.mysocial.data.dal.ImagemConversor
 import com.mysocial.data.PostStats
 import com.mysocial.data.dal.CommentDAO
 import com.mysocial.data.dal.LikeDAO
@@ -43,6 +46,39 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     var viewingPost by mutableStateOf<Post?>(null)
         private set
+
+    var draftImage by mutableStateOf<ByteArray?>(null)
+        private set
+
+    fun setImageFromCamera(bitmap: Bitmap?) {
+        if (bitmap == null) return
+        draftImage = ImagemConversor.paraBlob(bitmap)
+    }
+
+    fun setImageFromGallery(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            try {
+                draftImage = ImagemConversor.paraBlob(getApplication(), uri)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                message = "Não foi possível carregar a imagem"
+            }
+        }
+    }
+
+    fun clearImage() {
+        draftImage = null
+    }
+
+    fun reportCameraFailure() {
+        message = "Não foi possível abrir a câmera"
+    }
+
+    fun reportGalleryFailure() {
+        message = "Não foi possível abrir a galeria"
+    }
 
     private fun run(operation: suspend () -> Unit) {
         if (loading) return
@@ -98,7 +134,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         val userId = UserSession.requireUser()
         val trimmedContent = content.trim()
         PostValidator.validate(trimmedContent)
-        withContext(Dispatchers.IO) { dao.create(userId, trimmedContent) }
+        val image = draftImage
+        withContext(Dispatchers.IO) { dao.create(userId, trimmedContent, image) }
+        draftImage = null
         published = true
     }
 

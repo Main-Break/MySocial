@@ -1,6 +1,10 @@
 package com.mysocial.ui.screen
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mysocial.ui.component.PostImage
 import com.mysocial.ui.theme.Dimens
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
@@ -50,6 +57,14 @@ fun PostScreen(
     postViewModel: PostViewModel = viewModel()
 ) {
     var content by remember { mutableStateOf("") }
+
+    val camera = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview()
+    ) { bitmap -> postViewModel.setImageFromCamera(bitmap) }
+
+    val galeria = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> postViewModel.setImageFromGallery(uri) }
 
     LaunchedEffect(postId) {
         if (postId != null) postViewModel.loadForEdit(postId)
@@ -126,6 +141,41 @@ fun PostScreen(
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.bodyMedium
         )
+
+        if (postId == null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = {
+                    try {
+                        camera.launch(null)
+                    } catch (_: Exception) {
+                        postViewModel.reportCameraFailure()
+                    }
+                }) {
+                    Icon(Icons.Default.PhotoCamera, contentDescription = "Tirar foto", tint = PrimaryColor)
+                }
+                IconButton(onClick = {
+                    try {
+                        galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } catch (_: Exception) {
+                        postViewModel.reportGalleryFailure()
+                    }
+                }) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Escolher da galeria", tint = PrimaryColor)
+                }
+            }
+
+            postViewModel.draftImage?.let { image ->
+                Box {
+                    PostImage(image)
+                    IconButton(
+                        onClick = { postViewModel.clearImage() },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Remover imagem")
+                    }
+                }
+            }
+        }
 
         postViewModel.message?.let {
             Spacer(modifier = Modifier.height(Dimens.spaceSmall))

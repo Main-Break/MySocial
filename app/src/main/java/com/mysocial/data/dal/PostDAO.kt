@@ -11,13 +11,14 @@ import java.util.Locale
 internal class PostDAO(context: Context) {
     private val appContext = context.applicationContext
 
-    fun create(userId: Long, content: String) {
+    fun create(userId: Long, content: String, image: ByteArray? = null) {
         AppDatabase(appContext).use { db ->
             val createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT).format(Date())
             val values = ContentValues().apply {
                 put("user_id", userId)
                 put("content", content)
                 put("created_at", createdAt)
+                put("image", image)
             }
             db.writableDatabase.insertOrThrow("posts", null, values)
         }
@@ -26,7 +27,7 @@ internal class PostDAO(context: Context) {
     fun list(): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at, posts.image
             FROM posts
             JOIN users ON users.id = posts.user_id
             ORDER BY posts.created_at DESC, posts.id DESC
@@ -42,7 +43,8 @@ internal class PostDAO(context: Context) {
                             author = cursor.getString(2),
                             authorCoverColor = cursor.getString(3),
                             content = cursor.getString(4),
-                            createdAt = cursor.getString(5)
+                            createdAt = cursor.getString(5),
+                            image = cursor.getBlob(6)
                         )
                     )
                 }
@@ -53,7 +55,7 @@ internal class PostDAO(context: Context) {
     fun listByUser(userId: Long): List<Post> = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at, posts.image
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.user_id = ?
@@ -70,7 +72,8 @@ internal class PostDAO(context: Context) {
                             author = cursor.getString(2),
                             authorCoverColor = cursor.getString(3),
                             content = cursor.getString(4),
-                            createdAt = cursor.getString(5)
+                            createdAt = cursor.getString(5),
+                            image = cursor.getBlob(6)
                         )
                     )
                 }
@@ -81,7 +84,7 @@ internal class PostDAO(context: Context) {
     fun findById(id: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at, posts.image
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.id = ?
@@ -94,7 +97,8 @@ internal class PostDAO(context: Context) {
                 author = cursor.getString(2),
                 authorCoverColor = cursor.getString(3),
                 content = cursor.getString(4),
-                createdAt = cursor.getString(5)
+                createdAt = cursor.getString(5),
+                image = cursor.getBlob(6)
             ) else null
         }
     }
@@ -102,7 +106,7 @@ internal class PostDAO(context: Context) {
     fun findById(id: Long, currentUserId: Long): Post? = AppDatabase(appContext).use { db ->
         db.readableDatabase.rawQuery(
             """
-            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at
+            SELECT posts.id, posts.user_id, users.username, users.cover_color, posts.content, posts.created_at, posts.image
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.id = ? AND posts.user_id = ?
@@ -115,7 +119,8 @@ internal class PostDAO(context: Context) {
                 author = cursor.getString(2),
                 authorCoverColor = cursor.getString(3),
                 content = cursor.getString(4),
-                createdAt = cursor.getString(5)
+                createdAt = cursor.getString(5),
+                image = cursor.getBlob(6)
             ) else null
         }
     }

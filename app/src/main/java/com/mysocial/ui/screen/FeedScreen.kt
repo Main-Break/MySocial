@@ -82,6 +82,7 @@ fun FeedScreen(
                 username = post.author,
                 name = post.author,
                 contentPost = post.content,
+                image = post.image,
                 datePost = date.format(formatter),
                 amountComments = stats.comments,
                 amountLikes = stats.likes,

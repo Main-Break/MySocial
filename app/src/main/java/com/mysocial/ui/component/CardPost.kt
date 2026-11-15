@@ -44,6 +44,7 @@ fun CardPost(
     username: String,
     name: String,
     contentPost: String,
+    image: ByteArray? = null,
     datePost: String,
     amountComments: Int,
     amountLikes: Int,
@@ -111,6 +112,8 @@ fun CardPost(
         }
 
         Text(contentPost, style = MaterialTheme.typography.titleMedium)
+
+        image?.let { PostImage(it) }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
