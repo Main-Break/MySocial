@@ -54,6 +54,8 @@ const PAGINAS = {
   "5 NAVEGAÇÃO ENTRE TELAS": 8,
   "6 AÇÕES E MENUS": 9,
   "7 BANCO DE DADOS": 11,
+  "8 CAPTURA DE IMAGEM (CÂMERA E GALERIA)": 12,
+  "9 CONSUMO DE API EXTERNA (RETROFIT)": 14,
 };
 
 function sumarioParagrafo(texto) {
@@ -194,6 +196,84 @@ const corpo = [
     ...code(['db.readableDatabase.query(', '    "users", arrayOf("id", "username", "email"),', '    "id = ?", arrayOf(id.toString()),', "    null, null, null", ").use { cursor ->", "    if (cursor.moveToFirst())", "        User(cursor.getLong(0), cursor.getString(1), cursor.getString(2))", "    else null", "}"]),
     p("Observa-se o `\"id = ?\"` seguido de `arrayOf(id.toString())` logo abaixo: esse é o \"bind parameter\". O SQLite substitui o `?` pelo valor de forma segura, nunca interpretando o conteúdo como parte do comando SQL. É dessa maneira que todo o projeto se protege contra SQL Injection."),
   ]),
+
+  h1("8", "Captura de imagem (câmera e galeria)"),
+  ...item("rememberLauncherForActivityResult", "androidx.activity.compose", [
+    p("É a forma, dentro do Compose, de registrar um \"contrato\" com uma atividade externa ao aplicativo (como o app de câmera do aparelho ou o seletor de fotos do sistema) e receber o resultado de volta por meio de um callback, sem a necessidade de sobrescrever `onActivityResult` manualmente, como era feito em projetos mais antigos."),
+    ...code([
+      "val camera = rememberLauncherForActivityResult(",
+      "    ActivityResultContracts.TakePicturePreview()",
+      ") { bitmap -> postViewModel.setImageFromCamera(bitmap) }",
+      "",
+      "val galeria = rememberLauncherForActivityResult(",
+      "    ActivityResultContracts.PickVisualMedia()",
+      ") { uri -> postViewModel.setImageFromGallery(uri) }",
+    ]),
+    p("`TakePicturePreview` abre o aplicativo de câmera do próprio aparelho e devolve uma prévia da foto já como `Bitmap`, sem exigir permissão de câmera em tempo de execução (quem concede a permissão é o aplicativo de câmera, não o MySocial). `PickVisualMedia` abre o seletor de fotos do sistema (Photo Picker) e devolve apenas a `Uri` da imagem escolhida, também sem exigir permissão de armazenamento."),
+    p("Em `PostScreen`, cada um dos dois botões (ícones de câmera e de galeria) aciona o respectivo `launch(...)` dentro de um `try/catch`, de modo que, se o aparelho não possuir um aplicativo de câmera ou seletor de fotos disponível, o usuário recebe uma mensagem de erro em vez de o aplicativo travar."),
+  ], false),
+  ...item("BitmapFactory e compressão de imagem", "android.graphics / com.mysocial.data.dal.ImagemConversor", [
+    p("Antes de a foto ser anexada ao post, `ImagemConversor` reduz a imagem (no máximo 1024 pixels no lado maior, mantendo a proporção) e a comprime em JPEG com `Bitmap.compress(...)`, gerando um `ByteArray` pronto para ser gravado na coluna `image` da tabela `posts`."),
+    ...code([
+      "fun paraBlob(imagem: Bitmap): ByteArray {",
+      "    val reduzida = reduzir(imagem)",
+      "    return ByteArrayOutputStream().use { saida ->",
+      "        reduzida.compress(Bitmap.CompressFormat.JPEG, 80, saida)",
+      "        saida.toByteArray()",
+      "    }",
+      "}",
+    ]),
+    p("Quando a origem é a galeria (apenas uma `Uri`, não um `Bitmap` pronto), a mesma classe primeiro abre a imagem com `BitmapFactory.decodeStream`, usando `inSampleSize` para já carregá-la em uma resolução próxima da necessária, evitando estourar a memória com uma foto muito grande antes mesmo de reduzi-la."),
+    p("Para exibir a imagem salva, o componente `PostImage` faz o caminho inverso: `BitmapFactory.decodeByteArray(bytes, 0, bytes.size)` converte o `ByteArray` de volta em um `Bitmap`, que é então desenhado com `Image(bitmap = ..., contentScale = ContentScale.Crop)` dentro de uma proporção fixa (4:3), preenchendo a largura do post independentemente do formato original da foto."),
+  ], false),
+
+  h1("9", "Consumo de API externa (Retrofit)"),
+  ...item("Retrofit e interface de serviço", "com.squareup.retrofit2", [
+    p("Retrofit é uma biblioteca que transforma uma interface Kotlin comum em um cliente HTTP funcional: cada função da interface descreve uma requisição (verbo, caminho e parâmetros), e o Retrofit se encarrega de montar a chamada de rede, enviar e converter a resposta."),
+    ...code([
+      "interface ViaCepService {",
+      "    @GET(\"ws/{cep}/json/\")",
+      "    suspend fun buscarCep(@Path(\"cep\") cep: String): Response<CepResponse>",
+      "}",
+    ]),
+    p("`@GET` define o verbo e o caminho da requisição; `{cep}` é um espaço reservado, preenchido em tempo de execução pelo parâmetro anotado com `@Path`, sempre de forma segura (o Retrofit cuida da codificação do valor na URL). Por ser `suspend`, a função pode ser chamada diretamente de dentro de uma coroutine, sem bloquear a thread principal."),
+    ...code([
+      "object RetrofitClient {",
+      "    private const val BASE_URL = \"https://viacep.com.br/\"",
+      "    val viaCepApi: ViaCepService by lazy {",
+      "        Retrofit.Builder()",
+      "            .baseUrl(BASE_URL)",
+      "            .addConverterFactory(GsonConverterFactory.create())",
+      "            .build()",
+      "            .create(ViaCepService::class.java)",
+      "    }",
+      "}",
+    ]),
+    p("`RetrofitClient` monta essa interface uma única vez (`by lazy`), apontando sempre para o endereço oficial do ViaCEP em HTTPS. `GsonConverterFactory` é quem converte automaticamente o JSON devolvido pela API no objeto `CepResponse` (uma `data class` com um campo por informação do endereço)."),
+  ], false),
+  ...item("sealed class para representar estado", "com.mysocial.ui.viewmodel.CepState", [
+    p("Uma consulta de rede pode estar em mais de uma situação ao longo do tempo: ainda não foi iniciada, está em andamento, terminou com sucesso ou terminou com erro. Uma `sealed class` permite representar exatamente essas quatro possibilidades como tipos distintos, obrigando quem for tratar o estado (normalmente em um `when`) a considerar todos os casos possíveis."),
+    ...code([
+      "sealed class CepState {",
+      "    object Idle : CepState()",
+      "    object Loading : CepState()",
+      "    data class Success(val dados: CepResponse) : CepState()",
+      "    data class Error(val mensagem: String) : CepState()",
+      "}",
+    ]),
+    p("Diferentemente de simplesmente guardar um booleano `carregando` e uma `String?` de erro em variáveis separadas (o que permitiria estados contraditórios, como \"carregando\" e \"com erro\" ao mesmo tempo), a `sealed class` garante que o estado da consulta seja sempre um, e apenas um, desses quatro."),
+  ], false),
+  ...item("StateFlow, MutableStateFlow e collectAsState", "kotlinx.coroutines.flow", [
+    p("É outra forma de expor estado observável, alternativa ao `mutableStateOf` usado nos demais ViewModels do projeto. `MutableStateFlow` guarda o valor atual e notifica todos os observadores sempre que ele muda; `StateFlow` é a versão somente leitura dela, exposta publicamente para que a tela não consiga alterar o estado por fora do ViewModel."),
+    ...code([
+      "private val _estadoCep = MutableStateFlow<CepState>(CepState.Idle)",
+      "val estadoCep: StateFlow<CepState> = _estadoCep",
+      "",
+      "// na tela:",
+      "val estadoCep by cepViewModel.estadoCep.collectAsState()",
+    ]),
+    p("`collectAsState()` é a ponte entre um `StateFlow` (conceito de coroutines) e o Compose: ele observa o fluxo e devolve um `State` comum, que pode ser lido com `by` como qualquer outro estado de tela. `CepViewModel` usa `ViewModel` simples (não `AndroidViewModel`), pois não precisa de um `Context`: toda a sua dependência é a interface de rede do Retrofit, que não depende do aplicativo Android em si."),
+  ], false),
 ];
 
 const doc = new Document({
