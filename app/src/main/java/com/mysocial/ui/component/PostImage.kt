@@ -2,8 +2,8 @@ package com.mysocial.ui.component
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,10 +22,10 @@ fun PostImage(bytes: ByteArray, modifier: Modifier = Modifier) {
         Image(
             bitmap = bitmap,
             contentDescription = "Imagem do post",
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.Crop,
             modifier = modifier
                 .fillMaxWidth()
-                .heightIn(max = 300.dp)
+                .aspectRatio(4f / 3f)
                 .clip(RoundedCornerShape(12.dp))
         )
     }
