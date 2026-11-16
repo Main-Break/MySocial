@@ -50,11 +50,11 @@ const PAGINAS = {
   "1 INTERFACE DECLARATIVA COM COMPOSE": 3,
   "2 ESTADO DA TELA": 3,
   "3 LISTAS": 5,
-  "4 VIEWMODEL E COROUTINES": 6,
-  "5 NAVEGAÇÃO ENTRE TELAS": 8,
+  "4 VIEWMODEL E COROUTINES": 7,
+  "5 NAVEGAÇÃO ENTRE TELAS": 9,
   "6 AÇÕES E MENUS": 9,
-  "7 BANCO DE DADOS": 11,
-  "8 CAPTURA DE IMAGEM (CÂMERA E GALERIA)": 12,
+  "7 BANCO DE DADOS": 12,
+  "8 CAPTURA DE IMAGEM (CÂMERA E GALERIA)": 13,
   "9 CONSUMO DE API EXTERNA (RETROFIT)": 14,
 };
 
@@ -118,6 +118,11 @@ const corpo = [
     ...code(["LaunchedEffect(authViewModel.done) {", "    if (authViewModel.done) {", "        authViewModel.consumeResult()", "        onLoginSuccess()", "    }", "}"]),
     p("Neste segundo caso, a chave é o próprio estado `done`. Toda vez que ele é alterado (de `false` para `true`, quando o login é bem-sucedido), o bloco é executado novamente e a navegação ocorre. É o mesmo mecanismo utilizado para exigir login: em `AppNavigation.kt`, um `LaunchedEffect(destination, currentUser)` redireciona para o Login sempre que alguém tenta abrir uma rota protegida sem estar autenticado."),
   ]),
+  ...item("Retorno antecipado antes dos demais estados", "androidx.compose.runtime (padrão de composição segura)", [
+    p("Quando uma tela depende de haver um usuário logado (`UserSession.userId`), e esse valor pode se tornar nulo enquanto a própria tela ainda está desenhada na árvore de composição (por exemplo: a pessoa exclui a própria conta estando dentro de `EditProfileScreen`), ler esse valor com uma função que lança exceção se for nulo quebra o aplicativo: a recomposição seguinte roda antes de o `LaunchedEffect` de navegação em `AppNavigation.kt` conseguir tirar essa tela de cena."),
+    ...code(["val userId = UserSession.userId ?: return", "", "LaunchedEffect(Unit) { ... }"]),
+    p("A correção é encerrar a função ali mesmo (`?: return`), antes de declarar qualquer `remember`/`LaunchedEffect` subsequente: nessa última recomposição a tela simplesmente para de desenhar o formulário, sem erro, enquanto a navegação global (que observa o mesmo `UserSession.userId`) redireciona para o Login no quadro seguinte. Usado em `EditProfileScreen.kt`, acionado pela exclusão da própria conta."),
+  ], false),
 
   h1("3", "Listas"),
   ...item("LazyColumn e items", "androidx.compose.foundation.lazy", [
@@ -186,7 +191,7 @@ const corpo = [
   h1("7", "Banco de dados"),
   ...item("SQLiteOpenHelper", "android.database.sqlite", [
     p("É a classe base do Android para criar e manter um banco SQLite, sem a necessidade de nenhuma biblioteca externa (sem uso de Room). Estende-se essa classe e implementam-se dois métodos: `onCreate` (executado apenas na primeira vez que o aplicativo é aberto, cria todas as tabelas do zero) e `onUpgrade` (executado quando o número de versão do banco é incrementado, aplicando as alterações de schema aos dados já existentes)."),
-    ...code(["class AppDatabase(context: Context) : SQLiteOpenHelper(", "    context.applicationContext,", '    File(context.noBackupFilesDir, "mysocial.db").absolutePath,', "    null,", "    4 // versão do schema", ") {", "    override fun onCreate(db: SQLiteDatabase) { ... }", "    override fun onUpgrade(db, oldVersion, newVersion) { ... }", "}"]),
+    ...code(["class AppDatabase(context: Context) : SQLiteOpenHelper(", "    context.applicationContext,", '    File(context.noBackupFilesDir, "mysocial.db").absolutePath,', "    null,", "    6 // versão do schema", ") {", "    override fun onCreate(db: SQLiteDatabase) { ... }", "    override fun onUpgrade(db, oldVersion, newVersion) { ... }", "}"]),
     p("`writableDatabase` abre o banco em modo leitura e escrita (utilizado para INSERT/UPDATE/DELETE). `readableDatabase` abre apenas para leitura (utilizado nas buscas). Os DAOs sempre utilizam `AppDatabase(context).use { db -> ... }`; o `use` garante que a conexão seja fechada automaticamente ao final, mesmo em caso de erro."),
   ]),
   ...item("ContentValues e Cursor", "android.content / android.database", [
