@@ -62,6 +62,14 @@ class CommentViewModel(application: Application) : AndroidViewModel(application)
         comments = withContext(Dispatchers.IO) { dao.listByPost(postId) }
     }
 
+    fun update(id: Long, content: String) = run {
+        val userId = UserSession.requireUser()
+        val trimmedContent = content.trim()
+        CommentValidator.validate(trimmedContent)
+        withContext(Dispatchers.IO) { dao.update(id, userId, trimmedContent) }
+        comments = comments.map { if (it.id == id) it.copy(content = trimmedContent) else it }
+    }
+
     fun delete(id: Long) = run {
         val userId = UserSession.requireUser()
         withContext(Dispatchers.IO) { dao.delete(id, userId) }

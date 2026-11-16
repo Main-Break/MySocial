@@ -27,6 +27,9 @@ data class Profile(val userId: Long)
 object EditProfile
 
 @Serializable
+object Enderecos
+
+@Serializable
 data class Follows(val userId: Long, val type: TypeListFollows)
 
 @Serializable

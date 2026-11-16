@@ -13,6 +13,7 @@ import androidx.navigation.toRoute
 import com.mysocial.auth.UserSession
 import com.mysocial.ui.screen.DetailPostScreen
 import com.mysocial.ui.screen.EditProfileScreen
+import com.mysocial.ui.screen.EnderecosScreen
 import com.mysocial.ui.screen.FeedScreen
 import com.mysocial.ui.screen.FollowsScreen
 import com.mysocial.ui.screen.LoginScreen
@@ -93,6 +94,13 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
 
         composable<EditProfile> {
             EditProfileScreen(
+                voltar = { navController.popBackStack() },
+                onNavigateToEnderecos = { navController.navigate(Enderecos) }
+            )
+        }
+
+        composable<Enderecos> {
+            EnderecosScreen(
                 voltar = { navController.popBackStack() }
             )
         }

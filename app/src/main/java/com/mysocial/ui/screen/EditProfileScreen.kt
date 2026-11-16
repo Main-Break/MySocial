@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mysocial.auth.UserSession
 import com.mysocial.ui.theme.Dimens
+import com.mysocial.ui.theme.ErrorColor
 import com.mysocial.ui.theme.MySocialTheme
 import com.mysocial.ui.theme.PrimaryColor
 import com.mysocial.ui.theme.Username
@@ -44,10 +47,14 @@ import com.mysocial.ui.viewmodel.ProfileViewModel
 fun EditProfileScreen(
     modifier: Modifier = Modifier,
     voltar: () -> Unit = {},
+    onNavigateToEnderecos: () -> Unit = {},
     profileViewModel: ProfileViewModel = viewModel(),
     cepViewModel: CepViewModel = viewModel()
 ) {
-    val userId = UserSession.requireUser()
+    var confirmandoExclusaoConta by remember { mutableStateOf(false) }
+    // UserSession.userId pode virar null no meio da tela (logout ou exclusao de conta);
+    // nesse caso so para de desenhar o formulario, a navegacao global ja redireciona pro Login.
+    val userId = UserSession.userId ?: return
 
     LaunchedEffect(Unit) {
         profileViewModel.load(userId)
@@ -207,6 +214,31 @@ fun EditProfileScreen(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        TextButton(onClick = onNavigateToEnderecos) {
+            Text("Meus endereços salvos")
+        }
+
+        TextButton(onClick = { confirmandoExclusaoConta = true }) {
+            Text("Excluir minha conta", color = ErrorColor)
+        }
+    }
+
+    if (confirmandoExclusaoConta) {
+        AlertDialog(
+            onDismissRequest = { confirmandoExclusaoConta = false },
+            title = { Text("Excluir sua conta?") },
+            text = { Text("Essa ação não pode ser desfeita. Seus posts, comentários, curtidas e seguidas serão apagados.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmandoExclusaoConta = false
+                    profileViewModel.deleteAccount()
+                }) { Text("Excluir", color = ErrorColor) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmandoExclusaoConta = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
 

@@ -9,7 +9,7 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     context.applicationContext,
     File(context.noBackupFilesDir, "mysocial.db").absolutePath,
     null,
-    5
+    6
 ) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -65,6 +65,20 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
             created_at TEXT NOT NULL
             )
         """.trimIndent())
+
+        db.execSQL("""
+            CREATE TABLE enderecos(
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            apelido TEXT NOT NULL CHECK(length(apelido) BETWEEN 1 AND 40),
+            cep TEXT NOT NULL DEFAULT '',
+            rua TEXT NOT NULL DEFAULT '',
+            numero TEXT NOT NULL DEFAULT '',
+            bairro TEXT NOT NULL DEFAULT '',
+            cidade TEXT NOT NULL DEFAULT '',
+            estado TEXT NOT NULL DEFAULT ''
+            )
+        """.trimIndent())
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -110,6 +124,22 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
 
         if (oldVersion < 5) {
             adicionarColuna(db, "posts", "image", "BLOB")
+        }
+
+        if (oldVersion < 6) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS enderecos(
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                apelido TEXT NOT NULL CHECK(length(apelido) BETWEEN 1 AND 40),
+                cep TEXT NOT NULL DEFAULT '',
+                rua TEXT NOT NULL DEFAULT '',
+                numero TEXT NOT NULL DEFAULT '',
+                bairro TEXT NOT NULL DEFAULT '',
+                cidade TEXT NOT NULL DEFAULT '',
+                estado TEXT NOT NULL DEFAULT ''
+                )
+            """.trimIndent())
         }
     }
 

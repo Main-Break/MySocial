@@ -88,6 +88,8 @@ fun DetailPostScreen(
     var confirmandoExclusao by remember { mutableStateOf(false) }
     var menuAberto by remember { mutableStateOf(false) }
     var novoComentario by remember { mutableStateOf("") }
+    var comentarioEditandoId by remember { mutableStateOf<Long?>(null) }
+    var textoEdicaoComentario by remember { mutableStateOf("") }
     val post = postViewModel.viewingPost
     val stats = postViewModel.stats[postId] ?: PostStats()
 
@@ -232,13 +234,41 @@ fun DetailPostScreen(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceExtraSmall)) {
                         Text(comment.author, style = MaterialTheme.typography.titleMedium)
-                        if (comment.userId == UserSession.userId) {
+                        if (comment.userId == UserSession.userId && comentarioEditandoId != comment.id) {
+                            TextButton(onClick = {
+                                comentarioEditandoId = comment.id
+                                textoEdicaoComentario = comment.content
+                            }) {
+                                Text("Editar")
+                            }
                             TextButton(onClick = { commentViewModel.delete(comment.id) }) {
                                 Text("Excluir", color = ErrorColor)
                             }
                         }
                     }
-                    Text(comment.content)
+                    if (comentarioEditandoId == comment.id) {
+                        TextField(
+                            value = textoEdicaoComentario,
+                            onValueChange = { if (it.length <= CommentValidator.MAX_LENGTH) textoEdicaoComentario = it },
+                            minLines = 2,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceSmall)) {
+                            TextButton(onClick = {
+                                commentViewModel.update(comment.id, textoEdicaoComentario)
+                                comentarioEditandoId = null
+                            }) { Text("Salvar") }
+                            TextButton(onClick = { comentarioEditandoId = null }) { Text("Cancelar") }
+                        }
+                    } else {
+                        Text(comment.content)
+                    }
                 }
             }
         }

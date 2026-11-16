@@ -123,13 +123,24 @@ internal class UserDAO(context: Context) {
     }
 
     fun delete(id: Long, currentUserId: Long) {
-        require(currentUserId > 0) { "Faça login para continuar" }
-        require(id != currentUserId) { "Você não pode excluir o seu usuário" }
+        require(id == currentUserId) { "Você só pode excluir a sua própria conta" }
         AppDatabase(appContext).use { db ->
-            val deleted = db.writableDatabase.delete(
-                "users", "id = ? AND id <> ?",
-                arrayOf(id.toString(), currentUserId.toString())
-            )
+            // Sem CASCADE no SQLite deste projeto: remove manualmente tudo que depende do usuário
+            // antes de apagar a linha dele, pra não deixar post/comentário/curtida/seguida órfãos.
+            db.writableDatabase.apply {
+                execSQL(
+                    "DELETE FROM likes WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)",
+                    arrayOf(id, id)
+                )
+                execSQL(
+                    "DELETE FROM comments WHERE user_id = ? OR post_id IN (SELECT id FROM posts WHERE user_id = ?)",
+                    arrayOf(id, id)
+                )
+                execSQL("DELETE FROM follows WHERE follower_id = ? OR followed_id = ?", arrayOf(id, id))
+                execSQL("DELETE FROM enderecos WHERE user_id = ?", arrayOf(id))
+                execSQL("DELETE FROM posts WHERE user_id = ?", arrayOf(id))
+            }
+            val deleted = db.writableDatabase.delete("users", "id = ?", arrayOf(id.toString()))
             require(deleted == 1) { "Usuário não encontrado, atualize a lista" }
         }
     }

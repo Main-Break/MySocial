@@ -161,4 +161,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         withContext(Dispatchers.IO) { postDao.delete(id, currentUserId) }
         posts = posts.filterNot { it.id == id }
     }
+
+    fun deleteAccount() = run {
+        val currentUserId = UserSession.requireUser()
+        withContext(Dispatchers.IO) { userDao.delete(currentUserId, currentUserId) }
+        UserSession.clear()
+    }
 }

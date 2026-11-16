@@ -60,6 +60,17 @@ internal class CommentDAO(context: Context) {
         ).use { cursor -> cursor.count }
     }
 
+    fun update(id: Long, currentUserId: Long, content: String) {
+        AppDatabase(appContext).use { db ->
+            val values = ContentValues().apply { put("content", content) }
+            val updated = db.writableDatabase.update(
+                "comments", values, "id = ? AND user_id = ?",
+                arrayOf(id.toString(), currentUserId.toString())
+            )
+            require(updated == 1) { "Comentário não encontrado, atualize a lista" }
+        }
+    }
+
     fun delete(id: Long, currentUserId: Long) {
         AppDatabase(appContext).use { db ->
             val deleted = db.writableDatabase.delete(
